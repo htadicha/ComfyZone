@@ -8,7 +8,7 @@
 | `DEBUG` | Toggle prod safeguards | `True` only locally | `False` in prod |
 | `ALLOWED_HOSTS` | Permitted domains | e.g. `localhost,127.0.0.1` | e.g. `your-app.herokuapp.com` |
 | `DATABASE_URL` | Postgres connection string | Optional if using local `DB_*` vars | Automatically injected when Postgres addon is added |
-| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Manual DB override | Needed if not using `DATABASE_URL` locally | Typically not set on Heroku |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Manual DB override | Only set when you want local Postgres; otherwise SQLite is automatic | Typically not set on Heroku |
 | `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments | Supply test keys | Supply live keys and webhook secret |
 | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP delivery | Can keep console backend | Use SMTP/SendGrid credentials |
 | `SITE_URL` | Used in transactional links | e.g. `http://localhost:8000` | e.g. `https://your-app.herokuapp.com` |
@@ -30,7 +30,7 @@
 1. Copy `.env.example` to `.env` for local development.
 2. Update `SECRET_KEY`, Stripe keys, and email credentials with test values.
 3. Leave `DEBUG=True` and `ALLOWED_HOSTS=localhost,127.0.0.1` locally; swap to `DEBUG=False` and your production hostname(s) on Heroku.
-4. Use either `DATABASE_URL=postgres://...` or the individual `DB_*` variables. `dj-database-url` takes precedence when `DATABASE_URL` is present.
+4. Use either `DATABASE_URL=postgres://...` or the individual `DB_*` variables. `dj-database-url` takes precedence when `DATABASE_URL` is present. If you leave both blank, Django now falls back to SQLite (`db.sqlite3`) for local smoke tests.
 5. Commit **only** `.env.example`; keep `.env` out of git. On Heroku, replicate the same key names under Settings → Config Vars or via `heroku config:set KEY=value`.
 
 ## Static Files Workflow
@@ -141,6 +141,7 @@ heroku run python manage.py collectstatic --noinput
 - Heroku automatically provides `DATABASE_URL` when you add Postgres
 - The settings.py is configured to use `DATABASE_URL` if available
 - No need to set DB_NAME, DB_USER, etc. on Heroku
+- When neither `DATABASE_URL` nor `DB_*` overrides are defined locally, the project uses SQLite automatically so `python manage.py runserver` works out of the box.
 
 ### Static Files
 - WhiteNoise is configured for serving static files

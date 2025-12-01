@@ -33,20 +33,24 @@ pip install -r requirements.txt
 
 ## 4. Bootstrap the Database
 
-Use SQLite for local smoke tests without requiring Postgres:
+SQLite is now the default local database (written to `db.sqlite3`), so no
+extra environment variables are required:
 
 ```bash
-DATABASE_URL=sqlite:///db.sqlite3 python manage.py migrate
+python manage.py migrate
 ```
 
-> **Note:** The current migrations include a duplicate `orders.0002_create_orderitem_table`. If you hit `table "orders_orderitem" already exists`, mark it as applied with:<br>`DATABASE_URL=sqlite:///db.sqlite3 python manage.py migrate orders 0002 --fake`.
+You can still override the database explicitly—e.g. `DATABASE_URL=sqlite:///db.sqlite3 python manage.py migrate`
+—when running ad‑hoc scripts or CI jobs.
+
+> **Note:** The current migrations include a duplicate `orders.0002_create_orderitem_table`. If you hit `table "orders_orderitem" already exists`, mark it as applied with:<br>`python manage.py migrate orders 0002 --fake`.
 
 ## 5. Collect Static Assets
 
 Before mimicking a Heroku build, gather assets into `staticfiles/`:
 
 ```bash
-DATABASE_URL=sqlite:///db.sqlite3 python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput
 ```
 
 WhiteNoise reads from `STATIC_ROOT=staticfiles/`, so this command should succeed locally before deploying.

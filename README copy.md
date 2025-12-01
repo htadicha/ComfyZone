@@ -65,6 +65,11 @@ DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
 
+# Tip: if you omit the DB_* variables, the project will automatically
+# fall back to a local SQLite file (db.sqlite3) so you can get started
+# without provisioning Postgres. Add the DB settings only when you have
+# a Postgres instance you want to use for development.
+
 STRIPE_PUBLISHABLE_KEY=pk_test_your_key
 STRIPE_SECRET_KEY=sk_test_your_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret

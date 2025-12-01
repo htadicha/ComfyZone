@@ -92,21 +92,43 @@ WSGI_APPLICATION = "furniture_store.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Use DATABASE_URL if available (Heroku), otherwise use individual settings
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default=None),
-        conn_max_age=600,
-        conn_health_checks=True,
-    ) or {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME", default="furniture_store"),
-        "USER": config("DB_USER", default="postgres"),
-        "PASSWORD": config("DB_PASSWORD", default=""),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
+DATABASE_URL = config("DATABASE_URL", default="")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Only attempt Postgres when explicit credentials are supplied; otherwise
+    # fall back to SQLite for a frictionless local setup.
+    DB_NAME = config("DB_NAME", default="")
+    DB_USER = config("DB_USER", default="")
+    DB_PASSWORD = config("DB_PASSWORD", default="")
+    DB_HOST = config("DB_HOST", default="localhost")
+    DB_PORT = config("DB_PORT", default="5432")
+
+    if DB_NAME and DB_USER:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": DB_NAME,
+                "USER": DB_USER,
+                "PASSWORD": DB_PASSWORD,
+                "HOST": DB_HOST,
+                "PORT": DB_PORT,
+            }
+        }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
+        }
 
 
 # Password validation
