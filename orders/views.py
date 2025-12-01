@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -73,15 +74,15 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
             phone = request.POST.get("phone")
         
         # Calculate totals
-        subtotal = 0
+        subtotal = Decimal("0")
         if request.user.is_authenticated:
             for item in cart_items:
-                subtotal += item.get_subtotal()
+                subtotal += Decimal(item.get_subtotal())
         else:
-            subtotal = get_session_cart_total(request)
+            subtotal = Decimal(get_session_cart_total(request))
         
-        tax = subtotal * 0.1  # 10% tax (adjust as needed)
-        shipping_cost = 0  # Free shipping (adjust as needed)
+        tax = subtotal * Decimal("0.1")  # 10% tax (adjust as needed)
+        shipping_cost = Decimal("0")  # Free shipping (adjust as needed)
         total = subtotal + tax + shipping_cost
         
         # Create order
