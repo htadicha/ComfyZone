@@ -12,15 +12,19 @@
 | `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments | Supply test keys | Supply live keys and webhook secret |
 | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP delivery | Can keep console backend | Use SMTP/SendGrid credentials |
 | `SITE_URL` | Used in transactional links | e.g. `http://localhost:8000` | e.g. `https://your-app.herokuapp.com` |
+| `USE_AWS` | Toggle S3-backed media storage | Leave `False` to store uploads locally | Set `True` so uploads land in S3 |
+| `AWS_STORAGE_BUCKET_NAME`, `AWS_S3_REGION_NAME`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_SIGNATURE_VERSION`, `AWS_S3_CUSTOM_DOMAIN`, `AWS_LOCATION` | S3 configuration for media | Optional when `USE_AWS=False` | Required when `USE_AWS=True` |
 
 ## Development vs Production Setup
 
 ### Local Development (.env file)
+
 - **Keep your `.env` file** for local development
 - Fill in your local database credentials, Stripe test keys, etc.
 - This file is in `.gitignore` and won't be committed
 
 ### Heroku Production (Config Vars)
+
 - Heroku uses **Config Vars** instead of `.env` files
 - Set these in Heroku Dashboard or via CLI
 - Heroku automatically provides `DATABASE_URL` when you add Postgres addon
@@ -42,6 +46,7 @@
 ## Heroku Deployment Steps
 
 ### 1. Install Heroku CLI
+
 ```bash
 # macOS
 brew tap heroku/brew && brew install heroku
@@ -50,28 +55,33 @@ brew tap heroku/brew && brew install heroku
 ```
 
 ### 2. Login to Heroku
+
 ```bash
 heroku login
 ```
 
 ### 3. Create Heroku App
+
 ```bash
 heroku create your-app-name
 ```
 
 ### 4. Add PostgreSQL Addon
+
 ```bash
 heroku addons:create heroku-postgresql:mini
 ```
+
 This automatically sets `DATABASE_URL` - no need to configure it manually!
 
 ### 5. Set Config Vars in Heroku
 
 #### Option A: Via Heroku Dashboard
+
 1. Go to your app → Settings → Config Vars
 2. Add each variable:
 
-```
+```env
 SECRET_KEY=your-production-secret-key
 DEBUG=False
 ALLOWED_HOSTS=your-app-name.herokuapp.com
@@ -86,9 +96,16 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=your-email@gmail.com
 SITE_URL=https://your-app-name.herokuapp.com
+USE_AWS=True
+AWS_STORAGE_BUCKET_NAME=your-bucket
+AWS_S3_REGION_NAME=eu-west-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_LOCATION=media
 ```
 
 #### Option B: Via CLI
+
 ```bash
 heroku config:set SECRET_KEY=your-production-secret-key
 heroku config:set DEBUG=False
@@ -104,9 +121,16 @@ heroku config:set EMAIL_HOST_USER=your-email@gmail.com
 heroku config:set EMAIL_HOST_PASSWORD=your-app-password
 heroku config:set DEFAULT_FROM_EMAIL=your-email@gmail.com
 heroku config:set SITE_URL=https://your-app-name.herokuapp.com
+heroku config:set USE_AWS=True
+heroku config:set AWS_STORAGE_BUCKET_NAME=your-bucket
+heroku config:set AWS_S3_REGION_NAME=eu-west-1
+heroku config:set AWS_ACCESS_KEY_ID=your-access-key
+heroku config:set AWS_SECRET_ACCESS_KEY=your-secret-key
+heroku config:set AWS_LOCATION=media
 ```
 
 ### 6. Deploy to Heroku
+
 ```bash
 # Initialize git if not already done
 git init
@@ -121,16 +145,19 @@ git push heroku main
 ```
 
 ### 7. Run Migrations on Heroku
+
 ```bash
 heroku run python manage.py migrate
 ```
 
 ### 8. Create Superuser on Heroku
+
 ```bash
 heroku run python manage.py createsuperuser
 ```
 
 ### 9. Collect Static Files
+
 ```bash
 heroku run python manage.py collectstatic --noinput
 ```
@@ -138,27 +165,33 @@ heroku run python manage.py collectstatic --noinput
 ## Important Notes
 
 ### Database
+
 - Heroku automatically provides `DATABASE_URL` when you add Postgres
 - The settings.py is configured to use `DATABASE_URL` if available
 - No need to set DB_NAME, DB_USER, etc. on Heroku
 - When neither `DATABASE_URL` nor `DB_*` overrides are defined locally, the project uses SQLite automatically so `python manage.py runserver` works out of the box.
 
 ### Static Files
+
 - WhiteNoise is configured for serving static files
 - Run `collectstatic` after deployment
 - Static files are served automatically by WhiteNoise
 
 ### Media Files
+
 - Heroku's filesystem is ephemeral (files are deleted on restart)
-- For production, use **AWS S3** or **Cloudinary** for media storage
-- Consider using `django-storages` for S3 integration
+- This project now supports AWS S3 out of the box via `django-storages`.
+- Set `USE_AWS=True` plus the AWS credentials listed above so uploaded product images persist.
+- Bucket objects are stored under the prefix defined by `AWS_LOCATION` (default `media`).
 
 ### Stripe Webhooks
+
 - Update your Stripe webhook URL to: `https://your-app-name.herokuapp.com/payments/webhook/`
 - Use production Stripe keys (`pk_live_` and `sk_live_`) on Heroku
 - Keep test keys (`pk_test_` and `sk_test_`) in your local `.env`
 
 ### Email
+
 - For production, consider using **SendGrid** (Heroku addon) or **Mailgun**
 - Gmail may have rate limits for production use
 
@@ -187,17 +220,18 @@ heroku ps:scale web=1
 ## Troubleshooting
 
 ### Static files not loading
+
 ```bash
 heroku run python manage.py collectstatic --noinput
 ```
 
 ### Database connection issues
+
 - Check if Postgres addon is added: `heroku addons`
 - Verify DATABASE_URL: `heroku config:get DATABASE_URL`
 
 ### Migration errors
+
 ```bash
 heroku run python manage.py migrate --run-syncdb
 ```
-
-
