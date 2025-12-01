@@ -242,8 +242,19 @@ if not DEBUG:
 USE_AWS = config("USE_AWS", default=False, cast=bool)
 
 if USE_AWS:
+    def _normalize_region_name(value: str) -> str:
+        """Accept either 'eu-west-1' or 'Europe (Ireland) eu-west-1' style inputs."""
+        if not value:
+            return ""
+        value = value.strip()
+        if " " not in value:
+            return value
+        cleaned = value.replace("(", " ").replace(")", " ")
+        tokens = [token for token in cleaned.split() if "-" in token]
+        return tokens[-1] if tokens else value
+
     AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
-    AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="")
+    AWS_S3_REGION_NAME = _normalize_region_name(config("AWS_S3_REGION_NAME", default=""))
     AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
     AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
     AWS_S3_SIGNATURE_VERSION = config("AWS_S3_SIGNATURE_VERSION", default="s3v4")
