@@ -24,7 +24,7 @@
     <div class="row">
       <!-- Filters Sidebar -->
       <div class="col-md-3 mb-4">
-        <div class="card">
+        <div class="card filter-card">
           <div class="card-header text-white" style="background-color: #3b5d50;">
             <h5 class="mb-0">Filters</h5>
           </div>
@@ -38,7 +38,7 @@
 
               <!-- Category Filter -->
               <div class="mb-3">
-                <label class="form-label fw-bold">Category</label>
+                <label class="form-label fw-bold filter-category-label">Category</label>
                 <select name="category" class="form-control">
                   <option value="">All Categories</option>
                   {% for category in categories %}
