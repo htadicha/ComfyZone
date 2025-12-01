@@ -31,7 +31,27 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## 4. Notes for Heroku
+## 4. Bootstrap the Database
+
+Use SQLite for local smoke tests without requiring Postgres:
+
+```bash
+DATABASE_URL=sqlite:///db.sqlite3 python manage.py migrate
+```
+
+> **Note:** The current migrations include a duplicate `orders.0002_create_orderitem_table`. If you hit `table "orders_orderitem" already exists`, mark it as applied with:<br>`DATABASE_URL=sqlite:///db.sqlite3 python manage.py migrate orders 0002 --fake`.
+
+## 5. Collect Static Assets
+
+Before mimicking a Heroku build, gather assets into `staticfiles/`:
+
+```bash
+DATABASE_URL=sqlite:///db.sqlite3 python manage.py collectstatic --noinput
+```
+
+WhiteNoise reads from `STATIC_ROOT=staticfiles/`, so this command should succeed locally before deploying.
+
+## 6. Notes for Heroku
 
 - Keep `.venv` out of version control; Heroku builds its own environment using `runtime.txt` and `requirements.txt`.
 - Use `pip freeze > requirements.txt` after adding packages so Heroku receives the same versions.
