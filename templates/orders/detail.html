@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order {{ order.order_number }} - Furniture Store{% endblock %}
+
+{% block content %}
+<div class="untree_co-section">
+  <div class="container">
+    <h2>Order {{ order.order_number }}</h2>
+    <p><strong>Date:</strong> {{ order.created_at|date:"F d, Y" }}</p>
+    <p><strong>Status:</strong> <span class="badge bg-{{ order.get_status_display_class }}">{{ order.get_status_display }}</span></p>
+    
+    <h3 class="mt-4">Items</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items.all %}
+        <tr>
+          <td>{{ item.product_name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>${{ item.price }}</td>
+          <td>${{ item.subtotal }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3"><strong>Subtotal</strong></td>
+          <td><strong>${{ order.subtotal }}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="3"><strong>Tax</strong></td>
+          <td><strong>${{ order.tax }}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="3"><strong>Shipping</strong></td>
+          <td><strong>${{ order.shipping_cost }}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="3"><strong>Total</strong></td>
+          <td><strong>${{ order.total }}</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+    
+    <h3 class="mt-4">Shipping Address</h3>
+    <p>{{ order.shipping_street }}<br>
+    {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}<br>
+    {{ order.shipping_country }}</p>
+  </div>
+</div>
+{% endblock %}
+
+

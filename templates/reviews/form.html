@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if review %}Edit Review{% else %}Write a Review{% endif %} - {{ product.name }} - Furniture Store{% endblock %}
+
+{% block content %}
+<div class="untree_co-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="mb-4">
+          <h2 class="mb-3">{% if review %}Edit Your Review{% else %}Write a Review{% endif %}</h2>
+          <div class="d-flex align-items-center mb-3">
+            <a href="{% url 'store:product_detail' slug=product.slug %}" class="text-decoration-none">
+              <img src="{% if product.images.first %}{{ product.images.first.image.url }}{% else %}{% static 'images/product-1.png' %}{% endif %}" 
+                   alt="{{ product.name }}" 
+                   class="img-thumbnail me-3" 
+                   style="width: 80px; height: 80px; object-fit: cover;">
+            </a>
+            <div>
+              <h5 class="mb-0"><a href="{% url 'store:product_detail' slug=product.slug %}" class="text-decoration-none">{{ product.name }}</a></h5>
+              <p class="text-muted mb-0">${{ product.price }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <form method="post" id="reviewForm">
+              {% csrf_token %}
+              
+              <!-- Star Rating -->
+              <div class="mb-4">
+                <label class="form-label fw-bold">Rating <span class="text-danger">*</span></label>
+                <div class="star-rating" id="starRating">
+                  <span class="star" data-rating="1">★</span>
+                  <span class="star" data-rating="2">★</span>
+                  <span class="star" data-rating="3">★</span>
+                  <span class="star" data-rating="4">★</span>
+                  <span class="star" data-rating="5">★</span>
+                </div>
+                <small class="text-muted d-block mt-2">Click on a star to rate</small>
+                {% if form.rating.errors %}
+                  <div class="text-danger">{{ form.rating.errors }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Other form fields -->
+              <div class="mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="text-danger">{{ form.title.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.comment.id_for_label }}" class="form-label">{{ form.comment.label }} <span class="text-danger">*</span></label>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                  <div class="text-danger">{{ form.comment.errors }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Hidden rating field -->
+              {{ form.rating }}
+
+              <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <a href="{% url 'store:product_detail' slug=product.slug %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.star-rating {
+  font-size: 2rem;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 5px;
+}
+
+.star-rating .star {
+  color: #ddd;
+  transition: color 0.2s;
+  user-select: none;
+}
+
+.star-rating .star:hover,
+.star-rating .star.active {
+  color: #ffc107;
+}
+
+.star-rating .star:hover ~ .star {
+  color: #ddd;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const stars = document.querySelectorAll('.star-rating .star');
+  const ratingInput = document.getElementById('id_rating');
+  const form = document.getElementById('reviewForm');
+  const starContainer = document.querySelector('.star-rating');
+  
+  // Get initial rating value if editing
+  let currentRating = ratingInput.value ? parseInt(ratingInput.value) : 0;
+  
+  // Set initial stars
+  if (currentRating > 0) {
+    highlightStars(currentRating);
+  }
+  
+  // Handle star click
+  stars.forEach(star => {
+    star.addEventListener('click', function() {
+      const rating = parseInt(this.getAttribute('data-rating'));
+      ratingInput.value = rating;
+      currentRating = rating;
+      highlightStars(rating);
+    });
+    
+    // Hover effect
+    star.addEventListener('mouseenter', function() {
+      const rating = parseInt(this.getAttribute('data-rating'));
+      highlightStars(rating);
+    });
+  });
+  
+  // Reset on mouse leave (if no rating selected)
+  starContainer.addEventListener('mouseleave', function() {
+    if (currentRating === 0) {
+      highlightStars(0);
+    } else {
+      highlightStars(currentRating);
+    }
+  });
+  
+  function highlightStars(rating) {
+    stars.forEach((star, index) => {
+      if (index < rating) {
+        star.classList.add('active');
+      } else {
+        star.classList.remove('active');
+      }
+    });
+  }
+  
+  // Validate rating on form submit
+  form.addEventListener('submit', function(e) {
+    if (!ratingInput.value || ratingInput.value === '0') {
+      e.preventDefault();
+      alert('Please select a rating by clicking on the stars.');
+      return false;
+    }
+  });
+});
+</script>
+{% endblock %}

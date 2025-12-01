@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Profile - Furniture Store{% endblock %}
+
+{% block content %}
+<div class="untree_co-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8">
+        <h2 class="mb-4">Profile</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <h3>User Information</h3>
+          {% crispy user_form %}
+          <h3 class="mt-4">Profile Information</h3>
+          {% crispy profile_form %}
+          <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
+        </form>
+      </div>
+    </div>
+    
+    <div class="row mt-5">
+      <div class="col-md-12">
+        <h3>Addresses</h3>
+        <a href="{% url 'accounts:address_create' %}" class="btn btn-primary mb-3">Add New Address</a>
+        {% for address in addresses %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5>{{ address.get_address_type_display }}</h5>
+            <p>{{ address.street_address }}<br>
+            {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+            {{ address.country }}</p>
+            <a href="{% url 'accounts:address_update' pk=address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+            <form method="post" action="{% url 'accounts:address_delete' pk=address.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <p>No addresses added yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Product - Admin{% endblock %}
+
+{% block content %}
+<div class="untree_co-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-danger text-white">
+            <h3>Delete Product</h3>
+          </div>
+          <div class="card-body">
+            <p>Are you sure you want to delete the following product?</p>
+            <div class="alert alert-warning">
+              <strong>{{ product.name }}</strong><br>
+              <small>SKU: {{ product.sku|default:"N/A" }} | Price: ${{ product.price }}</small>
+            </div>
+            <p class="text-danger"><strong>Warning:</strong> This action cannot be undone!</p>
+            
+            <form method="post">
+              {% csrf_token %}
+              <div class="mt-4">
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a href="{% url 'store:admin_product_list' %}" class="btn btn-secondary">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

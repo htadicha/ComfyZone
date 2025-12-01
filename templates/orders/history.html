@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order History - Furniture Store{% endblock %}
+
+{% block content %}
+<div class="untree_co-section">
+  <div class="container">
+    <h2 class="mb-4">Order History</h2>
+    {% if orders %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order Number</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td>{{ order.order_number }}</td>
+            <td>{{ order.created_at|date:"F d, Y" }}</td>
+            <td><span class="badge bg-{{ order.get_status_display_class }}">{{ order.get_status_display }}</span></td>
+            <td>${{ order.total }}</td>
+            <td><a href="{% url 'orders:detail' order_number=order.order_number %}" class="btn btn-sm btn-primary">View Details</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p>You have no orders yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+
