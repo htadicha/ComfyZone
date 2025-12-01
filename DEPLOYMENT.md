@@ -25,6 +25,20 @@
 - Set these in Heroku Dashboard or via CLI
 - Heroku automatically provides `DATABASE_URL` when you add Postgres addon
 
+## Environment Configuration Workflow
+
+1. Copy `.env.example` to `.env` for local development.
+2. Update `SECRET_KEY`, Stripe keys, and email credentials with test values.
+3. Leave `DEBUG=True` and `ALLOWED_HOSTS=localhost,127.0.0.1` locally; swap to `DEBUG=False` and your production hostname(s) on Heroku.
+4. Use either `DATABASE_URL=postgres://...` or the individual `DB_*` variables. `dj-database-url` takes precedence when `DATABASE_URL` is present.
+5. Commit **only** `.env.example`; keep `.env` out of git. On Heroku, replicate the same key names under Settings → Config Vars or via `heroku config:set KEY=value`.
+
+## Static Files Workflow
+
+- `STATIC_ROOT` is set to `staticfiles/`. Before deploying, run `python manage.py collectstatic --noinput`.
+- WhiteNoise is inserted automatically when `DEBUG=False`, so Heroku can serve the collected assets without extra services.
+- If you update CSS/JS, re-run `collectstatic` so the hashed files in `staticfiles/` remain in sync.
+
 ## Heroku Deployment Steps
 
 ### 1. Install Heroku CLI
