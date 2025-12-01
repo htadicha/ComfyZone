@@ -55,7 +55,12 @@ python manage.py collectstatic --noinput
 
 WhiteNoise reads from `STATIC_ROOT=staticfiles/`, so this command should succeed locally before deploying.
 
-## 6. Notes for Heroku
+## 6. Media Storage Options
+
+- By default `USE_AWS=False`, so uploaded assets are written to `media/` on disk.
+- To exercise the S3 path locally, export the AWS variables from `.env.example` and set `USE_AWS=True`. The app will then send uploads to your bucket via `django-storages`.
+
+## 7. Notes for Heroku
 
 - Keep `.venv` out of version control; Heroku builds its own environment using `runtime.txt` and `requirements.txt`.
 - Use `pip freeze > requirements.txt` after adding packages so Heroku receives the same versions.
