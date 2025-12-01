@@ -11,9 +11,73 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from decouple import config, Csv
+import importlib
 import os
-import dj_database_url
+
+_dj_database_url_spec = importlib.util.find_spec("dj_database_url")
+if _dj_database_url_spec:
+    dj_database_url = importlib.import_module("dj_database_url")
+else:  # pragma: no cover - executed only when dj-database-url is absent
+    class _DjDatabaseUrlFallback:
+        def config(self, *_, **__):
+            raise ImportError(
+                "dj-database-url is required when DATABASE_URL is set. "
+                "Install it with `pip install dj-database-url`."
+            )
+
+    dj_database_url = _DjDatabaseUrlFallback()
+
+_decouple_spec = importlib.util.find_spec("decouple")
+if _decouple_spec:
+    decouple = importlib.import_module("decouple")
+    config = decouple.config
+    Csv = decouple.Csv
+else:  # pragma: no cover - executed only when python-decouple is absent
+    def _to_bool(value):
+        """Minimal bool caster similar to python-decouple."""
+        if isinstance(value, bool):
+            return value
+        normalized = str(value).strip().lower()
+        if normalized in {"1", "true", "t", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "f", "no", "n", "off"}:
+            return False
+        raise ValueError(f"Invalid boolean value: {value}")
+
+    def _apply_cast(value, cast):
+        if cast in (None, str) or value is None:
+            return value
+        if cast is bool:
+            return _to_bool(value)
+        if isinstance(cast, type):
+            return value if isinstance(value, cast) else cast(value)
+        if callable(cast):
+            return cast(value)
+        return value
+
+    class Csv:
+        def __init__(self, delimiter=",", strip=True, ignore_empty=True):
+            self.delimiter = delimiter
+            self.strip = strip
+            self.ignore_empty = ignore_empty
+
+        def __call__(self, value):
+            if value is None:
+                return []
+            if isinstance(value, (list, tuple)):
+                return list(value)
+            items = str(value).split(self.delimiter)
+            if self.strip:
+                items = [item.strip() for item in items]
+            if self.ignore_empty:
+                items = [item for item in items if item]
+            return items
+
+    def config(option, default=None, cast=str):
+        raw = os.getenv(option)
+        if raw is None:
+            return _apply_cast(default, cast)
+        return _apply_cast(raw, cast)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
