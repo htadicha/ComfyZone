@@ -5,17 +5,52 @@
 * License: https://creativecommons.org/licenses/by/3.0/
 */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+:root {
+  --font-family-primary: "Inter", sans-serif;
+  --font-size-base: 16px;
+  --font-size-filter-title: 1rem;
+  --font-size-category-filter: 0.9rem;
+}
 body {
   overflow-x: hidden;
   position: relative; }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-family-primary);
   font-weight: 400;
   line-height: 28px;
   color: #6a6a6a;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   background-color: #eff2f1; }
+
+body,
+p,
+li,
+a,
+label,
+input,
+select,
+textarea,
+button,
+.card,
+.card-header,
+.card-body,
+.form-control,
+.btn,
+.alert,
+.table {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base); }
+
+.filter-card .card-header,
+.filter-card .form-label,
+.filter-card .form-control,
+.filter-card .btn {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-filter-title); }
+
+.filter-card .filter-category-label {
+  font-size: var(--font-size-category-filter); }
 
 a {
   text-decoration: none;
