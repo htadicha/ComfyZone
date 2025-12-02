@@ -1,6 +1,8 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Submit
+from crispy_forms.layout import Layout, Submit
+
 from .models import Review
 
 
@@ -24,3 +26,8 @@ class ReviewForm(forms.ModelForm):
             Submit("submit", "Submit Review", css_class="btn btn-primary")
         )
 
+    def clean_rating(self):
+        rating = self.cleaned_data.get("rating")
+        if not rating or int(rating) not in {1, 2, 3, 4, 5}:
+            raise ValidationError("Please select a rating between 1 and 5 stars.")
+        return rating

@@ -6,7 +6,7 @@ from store.models import Product
 
 class Review(models.Model):
     """Product review model."""
-    
+
     RATING_CHOICES = [
         (1, "1 Star"),
         (2, "2 Stars"),
@@ -49,8 +49,8 @@ class Review(models.Model):
                 product=self.product
             ).exists()
             self.is_verified_purchase = has_purchased
-        
+
         super().save(*args, **kwargs)
-        
+
         # Update product average rating (could be done with signals)
         self.product.save()  # This will trigger any post-save signals
