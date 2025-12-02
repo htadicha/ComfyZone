@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Marketing Leads - Staff Dashboard{% endblock %}
+
+{% block content %}
+<section class="untree_co-section">
+  <div class="container">
+    <div class="row justify-content-between align-items-center mb-4">
+      <div class="col-md-8">
+        <h1 class="mb-0">Marketing Leads</h1>
+        <p class="text-muted">Track high-intent enquiries and coordinate follow up.</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="{% url 'marketing:lead_create' %}" class="btn btn-primary">New lead</a>
+      </div>
+    </div>
+
+    <form method="get" class="row g-3 align-items-center mb-3">
+      <div class="col-sm-4">
+        <label class="form-label">Filter by status</label>
+        <select name="status" class="form-select" onchange="this.form.submit()">
+          <option value="">All</option>
+          {% for value,label in status_choices %}
+            <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Interest</th>
+            <th>Status</th>
+            <th>Captured</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lead in leads %}
+            <tr>
+              <td>{{ lead.name }}</td>
+              <td><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></td>
+              <td>{{ lead.phone|default:"—" }}</td>
+              <td>{{ lead.interest|default:"—" }}</td>
+              <td><span class="badge bg-secondary text-capitalize">{{ lead.get_status_display }}</span></td>
+              <td>{{ lead.created_at|date:"M d, Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted">No leads captured yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+
+

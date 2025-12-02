@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Book a Showroom Consultation - ComfyZone{% endblock %}
+{% block meta_description %}Share your project details to book a personalised ComfyZone consultation. A furniture specialist will respond within one business day.{% endblock %}
+
+{% block content %}
+<section class="untree_co-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <h1 class="mb-3">Book a Showroom Consultation</h1>
+        <p class="text-muted">
+          Tell us how we can help and our concierge team will be in touch shortly. We respect your inbox—consent is required before we reach out.
+        </p>
+        <div class="card">
+          <div class="card-body">
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {% crispy form %}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+
+

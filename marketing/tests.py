@@ -1,3 +1,72 @@
-from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.core import mail
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
-# Create your tests here.
+from .models import MarketingLead, NewsletterSubscriber
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend", DEFAULT_FROM_EMAIL="test@example.com")
+class NewsletterTests(TestCase):
+    def test_subscribe_creates_inactive_record_and_sends_email(self):
+        response = self.client.post(
+            reverse("marketing:subscribe"),
+            {"email": "hello@example.com", "name": "Hello", "consent": True},
+            follow=False,
+        )
+        self.assertRedirects(response, "/")
+        subscriber = NewsletterSubscriber.objects.get(email="hello@example.com")
+        self.assertFalse(subscriber.is_active)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(str(subscriber.confirmation_token), mail.outbox[0].body)
+
+    def test_confirm_subscription_activates_user(self):
+        subscriber = NewsletterSubscriber.objects.create(
+            email="hello@example.com",
+            name="Hello",
+            consent=True,
+            consent_text="test",
+            is_active=False,
+        )
+        response = self.client.get(reverse("marketing:confirm_subscription", args=[subscriber.confirmation_token]))
+        self.assertRedirects(response, "/")
+        subscriber.refresh_from_db()
+        self.assertTrue(subscriber.is_active)
+        self.assertIsNotNone(subscriber.confirmed_at)
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend", DEFAULT_FROM_EMAIL="test@example.com")
+class MarketingLeadTests(TestCase):
+    def test_lead_form_requires_consent(self):
+        response = self.client.post(
+            reverse("marketing:lead_create"),
+            {"name": "Jane", "email": "jane@example.com", "interest": "Sofa refresh", "consent": False},
+        )
+        self.assertContains(response, "consent", status_code=200)
+        self.assertEqual(MarketingLead.objects.count(), 0)
+
+    def test_lead_form_records_entry(self):
+        response = self.client.post(
+            reverse("marketing:lead_create"),
+            {
+                "name": "Jane",
+                "email": "jane@example.com",
+                "interest": "Sofa refresh",
+                "consent": True,
+            },
+        )
+        self.assertRedirects(response, reverse("store:home"))
+        self.assertEqual(MarketingLead.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_lead_dashboard_requires_staff(self):
+        non_staff = get_user_model().objects.create_user(email="user@example.com", password="test12345")
+        self.client.force_login(non_staff)
+        response = self.client.get(reverse("marketing:lead_list"))
+        self.assertEqual(response.status_code, 302)  # redirected to login (fails user_passes_test)
+
+    def test_lead_dashboard_for_staff(self):
+        staff = get_user_model().objects.create_user(email="staff@example.com", password="test12345", is_staff=True)
+        self.client.force_login(staff)
+        response = self.client.get(reverse("marketing:lead_list"))
+        self.assertEqual(response.status_code, 200)
