@@ -113,3 +113,28 @@ class AddressForm(forms.ModelForm):
         )
 
 
+class ResendVerificationForm(forms.Form):
+    """Form used to request a new verification email."""
+
+    email = forms.EmailField(label="Account email address", required=True)
+
+    def __init__(self, *args, **kwargs):
+        self.user = None
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            "email",
+            Submit("submit", "Send verification link", css_class="btn btn-primary"),
+        )
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        try:
+            self.user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise forms.ValidationError("We couldn't find an account with that email.")
+
+        if self.user.is_verified:
+            raise forms.ValidationError("This account has already been verified.")
+
+        return email
