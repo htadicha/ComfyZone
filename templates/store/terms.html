@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Terms &amp; Conditions - ComfyZone{% endblock %}
+{% block meta_description %}Legal terms that govern your use of ComfyZone, including delivery timelines, returns, and acceptable use of our e-commerce services.{% endblock %}
+
+{% block content %}
+<section class="untree_co-section py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <h1 class="mb-4">Terms &amp; Conditions</h1>
+        <p class="text-muted">Updated {{ now|"F Y" }}</p>
+
+        <h3>1. Ordering &amp; Fulfilment</h3>
+        <p>Orders placed through ComfyZone are confirmed only after payment has cleared. We provide transparent delivery estimates at checkout and will notify you if lead times change.</p>
+
+        <h3>2. Returns &amp; Refunds</h3>
+        <p>You can request a return within 14 days of delivery provided the item is unused and in its original packaging. Start a return by visiting your <a href="{% url 'orders:history' %}">order history</a> page or contacting our team.</p>
+
+        <h3>3. Acceptable Use</h3>
+        <p>By using the site you agree not to disrupt services, attempt unauthorised access, or upload malicious content. We reserve the right to suspend accounts that violate these terms.</p>
+
+        <h3>4. Contact</h3>
+        <p>Questions? Email us via the <a href="{% url 'store:contact' %}">contact page</a> and we’ll respond within one business day.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+
+

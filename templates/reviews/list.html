@@ -26,7 +26,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h3>Customer Reviews</h3>
           {% if can_review %}
-            <a href="{% url 'reviews:create' product_slug=product.slug %}" class="btn btn-primary">Write a Review</a>
+            <a href="{% url 'reviews:manage' product_slug=product.slug %}" class="btn btn-primary">Write a Review</a>
           {% endif %}
         </div>
 
@@ -58,7 +58,7 @@
                   </small>
                   {% if user.is_authenticated and review.user == user %}
                     <div>
-                      <a href="{% url 'reviews:update' review_id=review.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                      <a href="{% url 'reviews:manage' product_slug=product.slug %}" class="btn btn-sm btn-outline-primary">Edit</a>
                       <form method="post" action="{% url 'reviews:delete' review_id=review.id %}" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this review?');">Delete</button>
@@ -74,7 +74,7 @@
           <div class="alert alert-info">
             <p class="mb-0">No reviews yet for this product.</p>
             {% if can_review %}
-              <a href="{% url 'reviews:create' product_slug=product.slug %}" class="btn btn-primary mt-2">Be the first to review!</a>
+              <a href="{% url 'reviews:manage' product_slug=product.slug %}" class="btn btn-primary mt-2">Be the first to review!</a>
             {% endif %}
           </div>
         {% endif %}

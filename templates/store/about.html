@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block title %}About Us - Furniture Store{% endblock %}
+{% block meta_description %}Learn why ComfyZone sources FSC-certified materials, showcases artisan designers, and backs every order with concierge after-care.{% endblock %}
 
 {% block content %}
 <!-- Start Hero Section -->
@@ -12,7 +13,7 @@
         <div class="intro-excerpt">
           <h1>About Us</h1>
           <p class="mb-4">Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique.</p>
-          <p><a href="{% url 'store:shop' %}" class="btn btn-secondary me-2">Shop Now</a><a href="#" class="btn btn-white-outline">Explore</a></p>
+          <p><a href="{% url 'store:shop' %}" class="btn btn-secondary me-2">Shop Now</a><a href="{% url 'store:services' %}" class="btn btn-white-outline">Explore</a></p>
         </div>
       </div>
       <div class="col-lg-7">
@@ -99,44 +100,44 @@
       <!-- Start Column 1 -->
       <div class="col-12 col-md-6 col-lg-3 mb-5 mb-md-0">
         <img src="{% static 'images/person_1.jpg' %}" class="img-fluid mb-5" alt="Lawson Arnold">
-        <h3><a href="#"><span class="">Lawson</span> Arnold</a></h3>
+        <h3><a href="{% url 'store:about' %}#team"><span class="">Lawson</span> Arnold</a></h3>
         <span class="d-block position mb-4">CEO, Founder, Atty.</span>
         <p>Separated they live in.
         Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-        <p class="mb-0"><a href="#" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
+        <p class="mb-0"><a href="{% url 'store:services' %}" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
       </div>
       <!-- End Column 1 -->
 
       <!-- Start Column 2 -->
       <div class="col-12 col-md-6 col-lg-3 mb-5 mb-md-0">
         <img src="{% static 'images/person_2.jpg' %}" class="img-fluid mb-5" alt="Jeremy Walker">
-        <h3><a href="#"><span class="">Jeremy</span> Walker</a></h3>
+        <h3><a href="{% url 'store:about' %}#team"><span class="">Jeremy</span> Walker</a></h3>
         <span class="d-block position mb-4">CEO, Founder, Atty.</span>
         <p>Separated they live in.
         Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-        <p class="mb-0"><a href="#" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
+        <p class="mb-0"><a href="{% url 'store:services' %}" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
       </div>
       <!-- End Column 2 -->
 
       <!-- Start Column 3 -->
       <div class="col-12 col-md-6 col-lg-3 mb-5 mb-md-0">
         <img src="{% static 'images/person_3.jpg' %}" class="img-fluid mb-5" alt="Patrik White">
-        <h3><a href="#"><span class="">Patrik</span> White</a></h3>
+        <h3><a href="{% url 'store:about' %}#team"><span class="">Patrik</span> White</a></h3>
         <span class="d-block position mb-4">CEO, Founder, Atty.</span>
         <p>Separated they live in.
         Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-        <p class="mb-0"><a href="#" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
+        <p class="mb-0"><a href="{% url 'store:services' %}" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
       </div>
       <!-- End Column 3 -->
 
       <!-- Start Column 4 -->
       <div class="col-12 col-md-6 col-lg-3 mb-5 mb-md-0">
         <img src="{% static 'images/person_4.jpg' %}" class="img-fluid mb-5" alt="Kathryn Ryan">
-        <h3><a href="#"><span class="">Kathryn</span> Ryan</a></h3>
+        <h3><a href="{% url 'store:about' %}#team"><span class="">Kathryn</span> Ryan</a></h3>
         <span class="d-block position mb-4">CEO, Founder, Atty.</span>
         <p>Separated they live in.
         Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-        <p class="mb-0"><a href="#" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
+        <p class="mb-0"><a href="{% url 'store:services' %}" class="more dark">Learn More <span class="icon-arrow_forward"></span></a></p>
       </div>
       <!-- End Column 4 -->
     </div>

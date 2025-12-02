@@ -11,6 +11,8 @@ urlpatterns = [
     path("about/", views.about, name="about"),
     path("services/", views.services, name="services"),
     path("contact/", views.contact, name="contact"),
+    path("terms/", views.terms, name="terms"),
+    path("privacy/", views.privacy, name="privacy"),
     # Admin product management
     path("manage/products/", views.admin_product_list, name="admin_product_list"),
     path("manage/products/create/", views.admin_product_create, name="admin_product_create"),

@@ -175,6 +175,16 @@ def contact(request):
     return render(request, "store/contact.html")
 
 
+def terms(request):
+    """Terms and conditions page."""
+    return render(request, "store/terms.html")
+
+
+def privacy(request):
+    """Privacy notice page."""
+    return render(request, "store/privacy.html")
+
+
 def is_staff_user(user):
     """Check if user is staff/admin."""
     return user.is_authenticated and user.is_staff
