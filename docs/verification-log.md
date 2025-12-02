@@ -10,3 +10,5 @@
 | `PYTHONUNBUFFERED=1 DATABASE_URL=sqlite:///db.sqlite3 gunicorn furniture_store.wsgi --bind 127.0.0.1:8001` | Run inside `.venv` | Gunicorn 23.0.0 booted, spawned a sync worker, and shut down cleanly after manual termination. |
 
 These commands validate that the project boots locally using the SQLite fallback defined by `DATABASE_URL`. Use the same environment variable when reproducing the checks.
+
+

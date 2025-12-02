@@ -1,0 +1,4 @@
+[DEFAULT]
+profile = django
+ignore = templates/store/admin/*
+

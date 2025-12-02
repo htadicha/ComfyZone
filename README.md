@@ -50,7 +50,7 @@ All configuration is sourced from environment variables (via `python-decouple`),
 
 ## Wireframes & Visual References
 
-UI mockups are derived directly from the Django templates under `templates/store/` and the shared assets inside `static/images/`. Use these quick ASCII snapshots plus the referenced templates to align designers, developers, and QA:
+UI mockups are derived directly from the Django templates under `templates/store/` and the shared assets inside `static/images/`. For deeper dive artefacts, see [`docs/wireframes/home.md`](docs/wireframes/home.md) and [`docs/wireframes/product-detail.md`](docs/wireframes/product-detail.md). Use these quick ASCII snapshots plus the referenced templates to align designers, developers, and QA:
 
 ```text
 Home / Hero (templates/store/home.html)
@@ -348,7 +348,7 @@ All endpoints are traditional Django views rendered via templates; there is no e
 
 ## Testing & Validation
 
-Automated Django test modules are scaffolded (`accounts/tests.py`, `store/tests.py`, etc.) and ready for suite expansion. In the meantime, `docs/verification-log.md` captures the exact commands already executed on 2025‑12‑01, including migrations, `collectstatic`, `runserver`, and a Gunicorn smoke test.
+Automated Django test modules are scaffolded (`accounts/tests.py`, `store/tests.py`, etc.) and ready for suite expansion. In the meantime, `docs/verification-log.md` captures the exact commands already executed on 2025‑12‑01, including migrations, `collectstatic`, `runserver`, and a Gunicorn smoke test. Validator evidence (flake8, djlint, W3C HTML exports, and broken-link sweeps) is logged in [`docs/evidence/validation-summary.md`](docs/evidence/validation-summary.md) so assessors can review objective proof without rerunning every tool.
 
 ### Manual Regression Checklist
 
@@ -416,6 +416,8 @@ See `DEPLOYMENT.md` for deeper troubleshooting tips (webhooks, logs, dyno scalin
 
 ## Agile Delivery Playbook
 
+Detailed artefacts (board process, sprint logs, and screenshots) now live under [`docs/agile/`](docs/agile/).
+
 ### GitHub Issues Workflow
 
 - **Issue templates**: Bug Report, Feature Request, User Story, Epic, Sprint Planning.
@@ -453,6 +455,8 @@ See `DEPLOYMENT.md` for deeper troubleshooting tips (webhooks, logs, dyno scalin
 | LinkedIn | [ComfyZone](https://linkedin.com/company/comfyzone) | New | Company updates, hiring |
 | YouTube | [ComfyZone TV](https://youtube.com/@comfyzone) | New | Product demos, styling tips |
 | Pinterest | [ComfyZone](https://pinterest.com/comfyzone) | New | Mood boards, seasonal sets |
+
+Newsletter growth happens through the footer CTA (double opt-in with consent logging) and high-intent shoppers can request concierge follow-up via [`/marketing/leads/new/`](marketing/urls.py). Staff review captured leads in the on-site dashboard or export subscribers straight from Django admin for CRM import.
 
 Content cadence (example):
 

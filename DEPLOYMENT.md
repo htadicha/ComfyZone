@@ -217,6 +217,17 @@ heroku config
 heroku ps:scale web=1
 ```
 
+## Quality Gates & Validation Evidence
+
+Run the following before tagging a release. Capture the console output or validator screenshots and log them in [`docs/evidence/validation-summary.md`](docs/evidence/validation-summary.md) so assessors can confirm the artefacts.
+
+| Check | Command / URL | Purpose |
+| --- | --- | --- |
+| Python style | `flake8 accounts reviews` | Keeps authentication/CRUD code compliant with PEP8. Expand scope when you touch new apps. |
+| Template hygiene | `djlint templates/base.html templates/reviews templates/store/home.html templates/store/about.html templates/store/services.html templates/store/terms.html templates/store/privacy.html templates/404.html --check --profile=django` | Catches malformed HTML on the customer-facing pages touched in this remediation; expand the list as you edit other templates. |
+| Broken links | `npx broken-link-checker https://your-app.herokuapp.com --recursive --exclude www.facebook.com` | Guarantees no `href="#"` placeholders remain in production. |
+| W3C validator | https://validator.w3.org/ | Upload `base.html`, landing pages, and any edited templates after SEO updates. |
+
 ## Troubleshooting
 
 ### Static files not loading
