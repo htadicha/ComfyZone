@@ -116,10 +116,6 @@
   <!-- Start Footer Section -->
   <footer class="footer-section">
     <div class="container relative">
-      <div class="sofa-img">
-        <img src="{% static 'images/sofa.png' %}" alt="Image" class="img-fluid">
-      </div>
-
       <div class="row">
         <div class="col-lg-8">
           <div class="subscription-form">
@@ -139,7 +135,7 @@
               <div class="col-auto form-check mt-2">
                 <input type="checkbox" class="form-check-input" id="newsletterConsent" name="consent" value="true" required>
                 <label class="form-check-label small" for="newsletterConsent">
-                  I agree to receive emails from ComfyZone.
+                  I agree to receive emails from ComfyZone.Unsubscribe anytime.
                 </label>
               </div>
               <div class="col-auto">
@@ -149,9 +145,6 @@
               </div>
               <input type="hidden" name="source" value="Footer CTA">
             </form>
-            <p class="small text-muted mt-2">
-              We’ll send a confirmation email so you can double opt-in. Unsubscribe anytime.
-            </p>
           </div>
         </div>
         <div class="col-lg-4">
@@ -232,6 +225,10 @@
           </div>
         </div>
       </div>
+
+      <div class="sofa-img">
+        <img src="{% static 'images/sofa.png' %}" alt="Image" class="img-fluid">
+      </div>
     </div>
   </footer>
   <!-- End Footer Section -->
@@ -239,22 +236,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
   <script src="{% static 'js/tiny-slider.js' %}"></script>
   <script src="{% static 'js/custom.js' %}"></script>
-  <style>
-    /* Dropdown hover functionality */
-    .dropdown-hover:hover .dropdown-menu {
-      display: block;
-      margin-top: 0;
-    }
-    
-    .dropdown-hover .dropdown-toggle {
-      cursor: pointer;
-    }
-    
-    /* Prevent dropdown from closing when moving mouse to menu */
-    .dropdown-hover .dropdown-menu {
-      margin-top: 0;
-    }
-  </style>
   <script>
     // Enable hover functionality for dropdowns
     document.addEventListener('DOMContentLoaded', function() {

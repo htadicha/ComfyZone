@@ -92,7 +92,17 @@ SECRET_KEY = config('SECRET_KEY', default="django-insecure-s*ju%pwu6c^n3nyza-4(w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+# ALLOWED_HOSTS configuration
+_allowed_hosts = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+# Ensure localhost and 127.0.0.1 are always included for local development
+if DEBUG:
+    if not _allowed_hosts:
+        ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    else:
+        # Merge with defaults to ensure localhost and 127.0.0.1 are present
+        ALLOWED_HOSTS = list(set(_allowed_hosts + ['localhost', '127.0.0.1']))
+else:
+    ALLOWED_HOSTS = _allowed_hosts if _allowed_hosts else []
 
 
 # Application definition
@@ -260,7 +270,7 @@ if USE_AWS:
     AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
     AWS_S3_SIGNATURE_VERSION = config("AWS_S3_SIGNATURE_VERSION", default="s3v4")
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None
+    AWS_DEFAULT_ACL = 'public-read'  # Allows public access to uploaded images
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
     AWS_LOCATION = config("AWS_LOCATION", default="media")

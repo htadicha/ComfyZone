@@ -744,3 +744,33 @@ textarea {
     height: 50px;
     border-radius: 50%;
     background: rgba(59, 93, 80, 0.2); }
+
+/* Dropdown hover functionality */
+.dropdown-hover:hover .dropdown-menu {
+  display: block;
+  margin-top: 0; }
+
+.dropdown-hover .dropdown-toggle {
+  cursor: pointer; }
+
+/* Prevent dropdown from closing when moving mouse to menu */
+.dropdown-hover .dropdown-menu {
+  margin-top: 0; }
+
+/* Fix sofa image positioning to prevent overlap */
+.footer-section .sofa-img {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none; }
+
+/* Ensure footer content appears above sofa image */
+.footer-section .row {
+  position: relative;
+  z-index: 2; }
+
+/* Ensure consultation card appears above sofa image */
+.footer-section .card.shadow-sm {
+  position: relative;
+  z-index: 10; }

@@ -1,3 +1,3 @@
-web: gunicorn furniture_store.wsgi --log-file -
+web: gunicorn furniture_store.wsgi:application
 
 
