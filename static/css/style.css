@@ -774,3 +774,13 @@ textarea {
 .footer-section .card.shadow-sm {
   position: relative;
   z-index: 10; }
+
+/* Ensure button text is visible in consultation card */
+.footer-section .card.shadow-sm .btn-outline-primary {
+  color: #3b5d50;
+  border-color: #3b5d50;
+  background-color: transparent; }
+  .footer-section .card.shadow-sm .btn-outline-primary:hover {
+    color: #ffffff;
+    background-color: #3b5d50;
+    border-color: #3b5d50; }
