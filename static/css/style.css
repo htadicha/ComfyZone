@@ -763,24 +763,38 @@ textarea {
   bottom: 0;
   right: 0;
   z-index: 1;
-  pointer-events: none; }
+  pointer-events: none;
+  max-width: 200px;
+  opacity: 0.6; }
 
 /* Ensure footer content appears above sofa image */
 .footer-section .row {
   position: relative;
   z-index: 2; }
 
-/* Ensure consultation card appears above sofa image */
-.footer-section .card.shadow-sm {
+/* Ensure consultation card appears above sofa image with proper spacing */
+.footer-section .card.shadow-sm,
+.footer-section .row > .col-lg-4:last-child .card {
   position: relative;
-  z-index: 10; }
+  z-index: 10;
+  box-shadow: none !important; }
 
-/* Ensure button text is visible in consultation card */
-.footer-section .card.shadow-sm .btn-outline-primary {
+/* Add padding to right column to prevent overlap with sofa image */
+@media (min-width: 992px) {
+  .footer-section .row > .col-lg-4:last-child {
+    padding-right: 220px;
+    padding-left: 0; } }
+
+/* Ensure button text is visible in consultation card with smaller text */
+.footer-section .card.shadow-sm .btn-outline-primary,
+.footer-section .row > .col-lg-4:last-child .card .btn-outline-primary {
   color: #3b5d50;
   border-color: #3b5d50;
-  background-color: transparent; }
-  .footer-section .card.shadow-sm .btn-outline-primary:hover {
+  background-color: transparent;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem; }
+  .footer-section .card.shadow-sm .btn-outline-primary:hover,
+  .footer-section .row > .col-lg-4:last-child .card .btn-outline-primary:hover {
     color: #ffffff;
     background-color: #3b5d50;
     border-color: #3b5d50; }
