@@ -97,3 +97,6 @@ print("  1. Images may not have been uploaded yet")
 print("  2. Check IAM permissions (s3:ListBucket, s3:GetObject)")
 print("  3. Verify bucket name is correct")
 
+
+
+

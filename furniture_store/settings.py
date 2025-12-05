@@ -273,7 +273,6 @@ if USE_AWS:
     AWS_DEFAULT_ACL = 'public-read'  # Allows public access to uploaded images
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    AWS_LOCATION = config("AWS_LOCATION", default="media")
     AWS_S3_CUSTOM_DOMAIN = config(
         "AWS_S3_CUSTOM_DOMAIN",
         default=(

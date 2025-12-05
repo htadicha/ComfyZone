@@ -172,3 +172,6 @@ urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 **Again, use AWS S3 for production - it's the proper solution!**
 
+
+
+

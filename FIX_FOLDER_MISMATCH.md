@@ -83,3 +83,6 @@ But updating the config var is easier! ✅
 ✅ URLs will point to: `https://hawashmart.s3.eu-west-1.amazonaws.com/photos/products/...`  
 ✅ Existing images will be accessible at the correct path
 
+
+
+

@@ -90,3 +90,6 @@ MEDIA_ROOT: Not set (or local path - doesn't matter since USE_AWS=True)
 ✅ **Not the cause of your NoSuchKey errors**  
 🎯 **Real issue**: Old files at wrong path (`media/products/` vs `media/photos/products/`)
 
+
+
+

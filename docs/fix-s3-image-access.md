@@ -153,3 +153,6 @@ After fixing this, all new uploads should work automatically because:
 - Bucket permissions now allow public ACLs
 - New uploads will have the correct permissions from the start
 
+
+
+

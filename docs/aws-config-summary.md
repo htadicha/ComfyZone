@@ -134,3 +134,6 @@ If images still don't work after this fix:
 3. Verify bucket permissions in AWS Console
 4. Test S3 connection manually with AWS CLI
 
+
+
+

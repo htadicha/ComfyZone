@@ -62,3 +62,6 @@ Your bucket has "Block Public ACLs" enabled, which overrides the `AWS_DEFAULT_AC
 - ✅ Images will be publicly accessible
 - ✅ No code changes needed
 
+
+
+

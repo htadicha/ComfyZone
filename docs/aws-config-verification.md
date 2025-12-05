@@ -134,3 +134,6 @@ If images aren't accessible, I recommend updating the ACL setting. Here's what n
 
 This will make uploaded images publicly accessible, which is typically what you want for product images on an e-commerce site.
 
+
+
+

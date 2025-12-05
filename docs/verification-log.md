@@ -12,3 +12,6 @@
 These commands validate that the project boots locally using the SQLite fallback defined by `DATABASE_URL`. Use the same environment variable when reproducing the checks.
 
 
+
+
+

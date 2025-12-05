@@ -98,3 +98,6 @@ print(f"MEDIA_URL: {settings.MEDIA_URL}")
 ⚠️ **Bucket permissions need to be fixed**  
 ⚠️ **Existing files may need to be re-uploaded**
 
+
+
+
