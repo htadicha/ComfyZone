@@ -90,7 +90,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default="django-insecure-s*ju%pwu6c^n3nyza-4(w@qx_$$y_u5#=qpmt=-9049a^_8w95")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = False
 
 # ALLOWED_HOSTS configuration
 _allowed_hosts = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
@@ -249,45 +249,68 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 if not DEBUG:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media & AWS S3 storage
 USE_AWS = config("USE_AWS", default=False, cast=bool)
 
 if USE_AWS:
-    def _normalize_region_name(value: str) -> str:
-        """Accept either 'eu-west-1' or 'Europe (Ireland) eu-west-1' style inputs."""
-        if not value:
-            return ""
-        value = value.strip()
-        if " " not in value:
-            return value
-        cleaned = value.replace("(", " ").replace(")", " ")
-        tokens = [token for token in cleaned.split() if "-" in token]
-        return tokens[-1] if tokens else value
-
-    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
-    AWS_S3_REGION_NAME = _normalize_region_name(config("AWS_S3_REGION_NAME", default=""))
-    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
-    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
-    AWS_S3_SIGNATURE_VERSION = config("AWS_S3_SIGNATURE_VERSION", default="s3v4")
+    # AWS S3 Configuration for Production - Media files only
+    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+    raw_location = config("AWS_LOCATION", default="media")
+    AWS_LOCATION = (raw_location.strip().strip("/") or "media") if raw_location else "media"
+    # Extract region code (e.g., 'eu-west-1' from 'Europe (Ireland) eu-west-1')
+    region_config = config("AWS_S3_REGION_NAME", default="")
+    AWS_S3_REGION_NAME = region_config.split()[-1] if region_config else ""
+    if AWS_S3_REGION_NAME:
+        AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+    else:
+        AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = 'public-read'  # Allows public access to uploaded images
-    AWS_QUERYSTRING_AUTH = False
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    AWS_S3_CUSTOM_DOMAIN = config(
-        "AWS_S3_CUSTOM_DOMAIN",
-        default=(
-            f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
-            if AWS_S3_REGION_NAME
-            else f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-        ),
+    # AWS_DEFAULT_ACL is set by MediaStorage class, don't override here
+    AWS_QUERYSTRING_AUTH = (
+        False  # Don't use query string authentication for public files
     )
+    AWS_S3_OBJECT_PARAMETERS = {
+        "CacheControl": "max-age=86400",
+    }
 
+    # Media files go to S3 with public-read access
+    # Note: Must use 'Hawashmart' (capital H) to match the directory name
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
-else:
-    MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
 
+    # Static files use WhiteNoise (works better on Heroku)
+    STATIC_URL = "/static/"
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+    STATICFILES_DIRS = [
+        BASE_DIR / "static",
+    ]
+    # Use Django's default storage - WhiteNoise middleware handles compression
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+    # WhiteNoise configuration for better static file serving
+    WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find files in STATICFILES_DIRS
+    WHITENOISE_AUTOREFRESH = True  # Auto-refresh in development
+else:
+    # Local Static and Media files configuration
+    STATIC_URL = "/static/"
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+    STATICFILES_DIRS = [
+        BASE_DIR / "static",
+    ]
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
+    # Use Django's default storage - WhiteNoise middleware handles compression
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+    # WhiteNoise configuration for better static file serving
+    WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find files in STATICFILES_DIRS
+    WHITENOISE_AUTOREFRESH = True  # Auto-refresh in development
+
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
