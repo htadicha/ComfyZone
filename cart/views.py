@@ -67,14 +67,19 @@ def add_to_cart(request, product_id):
 @require_http_methods(["POST"])
 def update_cart_item(request, item_id):
     """Update cart item quantity."""
-    quantity = int(request.POST.get("quantity", 1))
+    quantity_str = request.POST.get("quantity", "1")
+    try:
+        quantity = int(quantity_str)
+    except (ValueError, TypeError):
+        quantity = 1
     
     if request.user.is_authenticated:
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        old_quantity = cart_item.quantity
         if quantity > 0:
             cart_item.quantity = quantity
             cart_item.save()
-            messages.success(request, "Cart updated!")
+            messages.success(request, f"Cart updated! Quantity changed from {old_quantity} to {quantity}.")
         else:
             cart_item.delete()
             messages.success(request, "Item removed from cart!")
@@ -88,7 +93,7 @@ def update_cart_item(request, item_id):
             variation_ids = None
         
         update_session_cart_item(request, product_id, quantity, variation_ids)
-        messages.success(request, "Cart updated!")
+        messages.success(request, f"Cart updated! Quantity set to {quantity}.")
     
     return redirect("cart:view")
 

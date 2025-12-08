@@ -20,8 +20,7 @@
   <div class="container">
     {% if items %}
     <div class="row mb-5">
-      <form class="col-md-12" method="post">
-        {% csrf_token %}
+      <div class="col-md-12">
         <div class="site-blocks-table">
           <table class="table">
             <thead>
@@ -101,7 +100,7 @@
             </tbody>
           </table>
         </div>
-      </form>
+      </div>
     </div>
 
     <div class="row">
@@ -196,25 +195,40 @@ document.addEventListener('DOMContentLoaded', function() {
         newQuantity: newQuantity
       });
       
-      // Create or update hidden input for quantity
-      let quantityHiddenInput = form.querySelector('input[name="quantity"]');
-      if (!quantityHiddenInput) {
-        quantityHiddenInput = document.createElement('input');
-        quantityHiddenInput.type = 'hidden';
-        quantityHiddenInput.name = 'quantity';
-        form.appendChild(quantityHiddenInput);
-      }
+      // Remove any existing quantity hidden inputs to avoid duplicates
+      const existingQuantityInputs = form.querySelectorAll('input[name="quantity"]');
+      existingQuantityInputs.forEach(function(input) {
+        if (input.type === 'hidden') {
+          input.remove();
+        }
+      });
       
-      // Set the new quantity
+      // Create new hidden input for quantity
+      const quantityHiddenInput = document.createElement('input');
+      quantityHiddenInput.type = 'hidden';
+      quantityHiddenInput.name = 'quantity';
       quantityHiddenInput.value = newQuantity;
+      form.appendChild(quantityHiddenInput);
+      
+      // Update visible input
       quantityInput.value = newQuantity;
       
-      // Disable the button to prevent double submission
-      button.disabled = true;
+      // Verify the value before submitting
+      console.log('Before submit - hidden input value:', quantityHiddenInput.value);
+      console.log('Before submit - visible input value:', quantityInput.value);
+      console.log('Form action:', form.action);
+      
+      // Disable all buttons in the form to prevent double submission
+      const allButtons = form.querySelectorAll('button');
+      allButtons.forEach(function(btn) {
+        btn.disabled = true;
+      });
       
       // Submit the form
       console.log('Submitting form with quantity:', newQuantity);
-      form.submit();
+      setTimeout(function() {
+        form.submit();
+      }, 100); // Small delay to ensure value is set
       
       return false;
     });
