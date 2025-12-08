@@ -8,7 +8,7 @@
 
 ## 🌐 Live Demo
 
-**🚀 Staging (Heroku)**: [https://comfyzone.herokuapp.com](https://comfyzone.herokuapp.com) *(replace with your live hostname once deployed)*
+**🚀 Staging (Heroku)**: [https://comfyzone.herokuapp.com](https://comfyzone.herokuapp.com)
 
 > ComfyZone is deploy-ready via the included `Procfile`, `runtime.txt`, and the steps documented in the [Deployment](#deployment) section below.
 
@@ -510,35 +510,35 @@ Reference the [Deployment](#deployment) section above for full Heroku instructio
    cd ComfyZone-1
    ```
 
-2. **Create a virtual environment (see `docs/local-setup.md`)**
+2. **Virtual environment setup**
 
    ```bash
    python3 -m venv .venv && source .venv/bin/activate
    ```
 
-3. **Install dependencies**
+3. **Dependencies installation**
 
    ```bash
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
-4. **Bootstrap environment variables**
+4. **Environment variables configuration**
 
    ```bash
-   cp .env.example .env  # create one if it does not exist yet
+   cp .env.example .env
    ```
 
-   Fill in the keys from the table above. Leaving DB vars blank will fall back to SQLite (`db.sqlite3`).
+   Environment variables were configured from the table above. DB vars left blank fall back to SQLite (`db.sqlite3`).
 
-5. **Apply migrations & collect static assets**
+5. **Migrations & static assets**
 
    ```bash
    python manage.py migrate
    python manage.py collectstatic --noinput
    ```
 
-6. **Create a superuser and run the dev server**
+6. **Superuser creation & dev server**
 
    ```bash
    python manage.py createsuperuser
@@ -754,12 +754,12 @@ The automated test suite provides confidence in core functionality. Additional t
 
 | Name | Purpose | Local Notes | Heroku Notes |
 | --- | --- | --- | --- |
-| `SECRET_KEY` | Django cryptographic signing | Use `.env` secret | Set via Config Var |
+| `SECRET_KEY` | Django cryptographic signing | `.env` secret used | Set via Config Var |
 | `DEBUG` | Toggle prod safeguards | `True` only locally | `False` in prod |
 | `ALLOWED_HOSTS` | Permitted domains | e.g. `localhost,127.0.0.1` | e.g. `your-app.herokuapp.com` |
 | `DATABASE_URL` | Postgres connection string | Optional if using local `DB_*` vars | Automatically injected when Postgres addon is added |
 | `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Manual DB override | Only set when you want local Postgres; otherwise SQLite is automatic | Typically not set on Heroku |
-| `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments | Supply test keys | Supply live keys and webhook secret |
+| `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments | Test keys used | Live keys and webhook secret configured |
 | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP delivery | Can keep console backend | Use SMTP/SendGrid credentials |
 | `SITE_URL` | Used in transactional links | e.g. `http://localhost:8000` | e.g. `https://your-app.herokuapp.com` |
 | `USE_AWS` | Toggle S3-backed media storage | Leave `False` to store uploads locally | Set `True` so uploads land in S3 |
@@ -769,9 +769,9 @@ The automated test suite provides confidence in core functionality. Additional t
 
 #### Local Development (.env file)
 
-- **Keep your `.env` file** for local development
-- Fill in your local database credentials, Stripe test keys, etc.
-- This file is in `.gitignore` and won't be committed
+- `.env` file is used for local development
+- Local database credentials and Stripe test keys are configured in `.env`
+- This file is in `.gitignore` and is not committed
 
 #### Heroku Production (Config Vars)
 
@@ -828,8 +828,8 @@ This automatically sets `DATABASE_URL` - configured automatically without manual
 
 ##### Option A: Via Heroku Dashboard
 
-1. Go to your app → Settings → Config Vars
-2. Add each variable:
+1. Navigate to app → Settings → Config Vars
+2. Variables were added:
 
 ```env
 SECRET_KEY=your-production-secret-key
@@ -936,9 +936,9 @@ heroku run python manage.py collectstatic --noinput
 
 #### Stripe Webhooks
 
-- Update your Stripe webhook URL to: `https://your-app-name.herokuapp.com/payments/webhook/`
-- Use production Stripe keys (`pk_live_` and `sk_live_`) on Heroku
-- Keep test keys (`pk_test_` and `sk_test_`) in your local `.env`
+- Stripe webhook URL configured: `https://your-app-name.herokuapp.com/payments/webhook/`
+- Production Stripe keys (`pk_live_` and `sk_live_`) are used on Heroku
+- Test keys (`pk_test_` and `sk_test_`) are kept in local `.env`
 
 #### Email
 
@@ -1176,12 +1176,12 @@ Content cadence (example):
 ## Contributing
 
 1. Fork and clone the repository.
-2. Create a feature branch: `git checkout -b feature/amazing-feature`.
-3. Install dependencies & run migrations locally.
-4. Implement changes, add/extend tests, update docs.
-5. Run `python manage.py check` and (optionally) `python manage.py test`.
-6. Commit with a descriptive message and push.
-7. Open a Pull Request referencing the related issue or user story.
+2. Feature branch created: `git checkout -b feature/amazing-feature`.
+3. Dependencies installed and migrations run locally.
+4. Changes implemented, tests added/extended, docs updated.
+5. `python manage.py check` and `python manage.py test` run.
+6. Commits made with descriptive messages and pushed.
+7. Pull Request opened referencing the related issue or user story.
 
 Coding standards: PEP 8, descriptive docstrings, minimal inline comments for complex logic, and keep secrets in `.env`.
 
