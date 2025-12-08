@@ -4,13 +4,13 @@
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)](https://www.python.org/)
 [![Stripe](https://img.shields.io/badge/Payments-Stripe-blueviolet?logo=stripe)](https://stripe.com/)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](#deployment)
-[![Docs](https://img.shields.io/badge/Docs-DEPLOYMENT.md-blue)](DEPLOYMENT.md)
+[![Docs](https://img.shields.io/badge/Docs-README.md-blue)](#deployment)
 
 ## 🌐 Live Demo
 
 **🚀 Staging (Heroku)**: [https://comfyzone.herokuapp.com](https://comfyzone.herokuapp.com) *(replace with your live hostname once deployed)*
 
-> ComfyZone is deploy-ready via the included `Procfile`, `runtime.txt`, and the steps documented in `DEPLOYMENT.md`.
+> ComfyZone is deploy-ready via the included `Procfile`, `runtime.txt`, and the steps documented in the [Deployment](#deployment) section below.
 
 ## 📋 Table of Contents
 
@@ -33,6 +33,7 @@
 - [Performance Optimization](#performance-optimization)
 - [Testing & Validation](#testing--validation)
 - [Deployment](#deployment)
+- [Heroku AWS Configuration](#heroku-aws-configuration)
 - [Agile Delivery Playbook](#agile-delivery-playbook)
 - [Social Media & Marketing Readiness](#social-media--marketing-readiness)
 - [Contributing](#contributing)
@@ -54,28 +55,81 @@ All configuration is sourced from environment variables (via `python-decouple`),
 
 ## Wireframes & Visual References
 
-UI mockups are derived directly from the Django templates under `templates/store/` and the shared assets inside `static/images/`. For deeper dive artefacts, see [`docs/wireframes/home.md`](docs/wireframes/home.md) and [`docs/wireframes/product-detail.md`](docs/wireframes/product-detail.md). Use these quick ASCII snapshots plus the referenced templates to align designers, developers, and QA:
+UI mockups are derived directly from the Django templates under `templates/store/` and the shared assets inside `static/images/`. Use these detailed wireframes plus the referenced templates to align designers, developers, and QA:
 
-```text
-Home / Hero (templates/store/home.html)
-┌───────────────────────────────┬────────────────────────────┐
-│ Value prop + CTA              │ Hero render (`images/couch`)│
-│ Featured categories + stats   │ Sticky CTA buttons          │
-└───────────────────────────────┴────────────────────────────┘
+### Home / Landing Page
 
-Product Detail (templates/store/product_detail.html)
-┌──────────────┬────────────────────────────────────────────┐
-│ Gallery rail │ Title, price, variation picker, add-to-cart│
-│ (thumbnails) │ Reviews summary + tabbed detail cards       │
-└──────────────┴────────────────────────────────────────────┘
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Hero: headline + CTA                                                         │
+│ ┌─────────────┐ ┌──────────────────────────────────────────────────────────┐ │
+│ │ Value copy  │ │ Lifestyle image                                         │ │
+│ │ • H1        │ │ • Lazy-loaded to keep LCP < 2.5s                        │ │
+│ │ • Paragraph │ │                                                          │ │
+│ │ • CTA pair  │ │                                                          │ │
+│ └─────────────┘ └──────────────────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Featured products (3-up cards)                                               │
+│ [Card]  [Card]  [Card]                                                       │
+│ • Image w/ alt text                                                          │
+│ • Title                                                                      │
+│ • Price                                                                      │
+│ • Quick action icon                                                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Why Choose Us                                                                │
+│ • 4 feature tiles (Shipping, Shopping ease, Support, Returns)                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Newsletter CTA (footer hero)                                                 │
+│ • Email + name inputs                                                        │
+│ • Clear consent copy                                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
 
-Checkout (templates/payments/checkout.html)
+**Notes:**
+- Navigation exposes Shop/About/Services/Contact plus account/cart icons.
+- Hero CTA buttons route to `shop/` and `about/`.
+- Featured products link to `/product/<slug>/`.
+- Newsletter form posts to `marketing:subscribe` and feeds Merit LO5 evidence.
+
+### Product Detail Page
+
+```
+┌─────────────────────────────┬──────────────────────────────────────────────┐
+│ Image carousel (60%)        │ Product info (40%)                           │
+│ • Primary image             │ • Product title + price                      │
+│ • Thumbnail rail            │ • Rating summary + review count              │
+│                             │ • Short description                          │
+│                             │ • Stock status + quantity selector           │
+│                             │ • Variation selects (color/size)             │
+│                             │ • Add to cart button                         │
+├─────────────────────────────┴──────────────────────────────────────────────┤
+│ Reviews block                                                               
+│ • List top 5 approved reviews                                               
+│ • CTA: "Manage your review" (auth only)                                     
+│ • Guests see login prompt                                                   
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Related products (4-up grid)                                                 
+│ • Cards mirror home layout                                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Decisions:**
+- **Review CTA** links to the unified CRUD page introduced in this sprint, satisfying LO1.9 + LO1.13 evidence.
+- **Metadata**: `meta_description` pulls from `product.meta_description` so SEO snippets match catalog copy.
+- **Accessibility**: Carousel controls labelled for screen readers; images carry `alt_text`.
+
+### Additional Page Wireframes
+
+**Checkout (templates/payments/checkout.html)**
+```
 ┌─────────────────────┬─────────────────────────────────────┐
 │ Address selection   │ Order summary, taxes, Stripe button │
 │ + notes             │ Status badges + audit trail         │
 └─────────────────────┴─────────────────────────────────────┘
+```
 
-Storefront Admin (templates/store/admin/*.html)
+**Storefront Admin (templates/store/admin/*.html)**
+```
 ┌───────────────┬──────────────────────────────────────────┐
 │ Filter + search│ Paginated table w/ status badges        │
 │ Quick actions  │ Inline links to CRUD + gallery manage   │
@@ -445,7 +499,7 @@ CREATE INDEX idx_payment_tx ON payments_payment(transaction_id);
 | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP | Console backend by default |
 | `SITE_URL` | Absolute URL in transactional emails | `https://comfyzone.herokuapp.com` |
 
-Reference `DEPLOYMENT.md` for full Heroku instructions and `docs/local-setup.md` for virtualenv guidance.
+Reference the [Deployment](#deployment) section above for full Heroku instructions and `docs/local-setup.md` for virtualenv guidance.
 
 ## Installation & Local Setup
 
@@ -551,26 +605,251 @@ Automated Django test modules are scaffolded (`accounts/tests.py`, `store/tests.
 
 ## Deployment
 
-### Heroku Quick Start
+### Required Environment Variables
+
+| Name | Purpose | Local Notes | Heroku Notes |
+| --- | --- | --- | --- |
+| `SECRET_KEY` | Django cryptographic signing | Use `.env` secret | Set via Config Var |
+| `DEBUG` | Toggle prod safeguards | `True` only locally | `False` in prod |
+| `ALLOWED_HOSTS` | Permitted domains | e.g. `localhost,127.0.0.1` | e.g. `your-app.herokuapp.com` |
+| `DATABASE_URL` | Postgres connection string | Optional if using local `DB_*` vars | Automatically injected when Postgres addon is added |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Manual DB override | Only set when you want local Postgres; otherwise SQLite is automatic | Typically not set on Heroku |
+| `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments | Supply test keys | Supply live keys and webhook secret |
+| `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP delivery | Can keep console backend | Use SMTP/SendGrid credentials |
+| `SITE_URL` | Used in transactional links | e.g. `http://localhost:8000` | e.g. `https://your-app.herokuapp.com` |
+| `USE_AWS` | Toggle S3-backed media storage | Leave `False` to store uploads locally | Set `True` so uploads land in S3 |
+| `AWS_STORAGE_BUCKET_NAME`, `AWS_S3_REGION_NAME`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_SIGNATURE_VERSION`, `AWS_S3_CUSTOM_DOMAIN`, `AWS_LOCATION` | S3 configuration for media | Optional when `USE_AWS=False` | Required when `USE_AWS=True` (use the region code, e.g. `eu-west-1`) |
+
+### Development vs Production Setup
+
+#### Local Development (.env file)
+
+- **Keep your `.env` file** for local development
+- Fill in your local database credentials, Stripe test keys, etc.
+- This file is in `.gitignore` and won't be committed
+
+#### Heroku Production (Config Vars)
+
+- Heroku uses **Config Vars** instead of `.env` files
+- Set these in Heroku Dashboard or via CLI
+- Heroku automatically provides `DATABASE_URL` when you add Postgres addon
+
+### Environment Configuration Workflow
+
+1. Copy `.env.example` to `.env` for local development.
+2. Update `SECRET_KEY`, Stripe keys, and email credentials with test values.
+3. Leave `DEBUG=True` and `ALLOWED_HOSTS=localhost,127.0.0.1` locally; swap to `DEBUG=False` and your production hostname(s) on Heroku.
+4. Use either `DATABASE_URL=postgres://...` or the individual `DB_*` variables. `dj-database-url` takes precedence when `DATABASE_URL` is present. If you leave both blank, Django now falls back to SQLite (`db.sqlite3`) for local smoke tests.
+5. Commit **only** `.env.example`; keep `.env` out of git. On Heroku, replicate the same key names under Settings → Config Vars or via `heroku config:set KEY=value`.
+
+### Static Files Workflow
+
+- `STATIC_ROOT` is set to `staticfiles/`. Before deploying, run `python manage.py collectstatic --noinput`.
+- WhiteNoise is inserted automatically when `DEBUG=False`, so Heroku can serve the collected assets without extra services.
+- If you update CSS/JS, re-run `collectstatic` so the hashed files in `staticfiles/` remain in sync.
+
+### Heroku Deployment Steps
+
+#### 1. Install Heroku CLI
 
 ```bash
-# 1. Log in and create the app
+# macOS
+brew tap heroku/brew && brew install heroku
+
+# Or download from https://devcenter.heroku.com/articles/heroku-cli
+```
+
+#### 2. Login to Heroku
+
+```bash
 heroku login
-heroku create comfyzone
+```
 
-# 2. Attach Postgres + set config vars
+#### 3. Create Heroku App
+
+```bash
+heroku create your-app-name
+```
+
+#### 4. Add PostgreSQL Addon
+
+```bash
 heroku addons:create heroku-postgresql:mini
-heroku config:set SECRET_KEY=... DEBUG=False ALLOWED_HOSTS=comfyzone.herokuapp.com
-heroku config:set STRIPE_PUBLISHABLE_KEY=pk_live_... STRIPE_SECRET_KEY=sk_live_... STRIPE_WEBHOOK_SECRET=whsec_...
-heroku config:set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend \
-                 EMAIL_HOST=smtp.gmail.com EMAIL_PORT=587 EMAIL_USE_TLS=True \
-                 EMAIL_HOST_USER=you@gmail.com EMAIL_HOST_PASSWORD=app-password \
-                 DEFAULT_FROM_EMAIL=orders@comfyzone.com SITE_URL=https://comfyzone.herokuapp.com
+```
 
-# 3. Deploy + run migrations/static collection
+This automatically sets `DATABASE_URL` - no need to configure it manually!
+
+#### 5. Set Config Vars in Heroku
+
+##### Option A: Via Heroku Dashboard
+
+1. Go to your app → Settings → Config Vars
+2. Add each variable:
+
+```env
+SECRET_KEY=your-production-secret-key
+DEBUG=False
+ALLOWED_HOSTS=your-app-name.herokuapp.com
+STRIPE_PUBLISHABLE_KEY=pk_live_your_key
+STRIPE_SECRET_KEY=sk_live_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=your-email@gmail.com
+SITE_URL=https://your-app-name.herokuapp.com
+USE_AWS=True
+AWS_STORAGE_BUCKET_NAME=your-bucket
+AWS_S3_REGION_NAME=eu-west-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_LOCATION=media
+```
+
+##### Option B: Via CLI
+
+```bash
+heroku config:set SECRET_KEY=your-production-secret-key
+heroku config:set DEBUG=False
+heroku config:set ALLOWED_HOSTS=your-app-name.herokuapp.com
+heroku config:set STRIPE_PUBLISHABLE_KEY=pk_live_your_key
+heroku config:set STRIPE_SECRET_KEY=sk_live_your_key
+heroku config:set STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+heroku config:set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+heroku config:set EMAIL_HOST=smtp.gmail.com
+heroku config:set EMAIL_PORT=587
+heroku config:set EMAIL_USE_TLS=True
+heroku config:set EMAIL_HOST_USER=your-email@gmail.com
+heroku config:set EMAIL_HOST_PASSWORD=your-app-password
+heroku config:set DEFAULT_FROM_EMAIL=your-email@gmail.com
+heroku config:set SITE_URL=https://your-app-name.herokuapp.com
+heroku config:set USE_AWS=True
+heroku config:set AWS_STORAGE_BUCKET_NAME=your-bucket
+heroku config:set AWS_S3_REGION_NAME=eu-west-1
+heroku config:set AWS_ACCESS_KEY_ID=your-access-key
+heroku config:set AWS_SECRET_ACCESS_KEY=your-secret-key
+heroku config:set AWS_LOCATION=media
+```
+
+#### 6. Deploy to Heroku
+
+```bash
+# Initialize git if not already done
+git init
+git add .
+git commit -m "Initial commit"
+
+# Add Heroku remote (if not already added)
+heroku git:remote -a your-app-name
+
+# Deploy
 git push heroku main
+```
+
+#### 7. Run Migrations on Heroku
+
+```bash
 heroku run python manage.py migrate
+```
+
+#### 8. Create Superuser on Heroku
+
+```bash
+heroku run python manage.py createsuperuser
+```
+
+#### 9. Collect Static Files
+
+```bash
 heroku run python manage.py collectstatic --noinput
+```
+
+### Important Notes
+
+#### Database
+
+- Heroku automatically provides `DATABASE_URL` when you add Postgres
+- The settings.py is configured to use `DATABASE_URL` if available
+- No need to set DB_NAME, DB_USER, etc. on Heroku
+- When neither `DATABASE_URL` nor `DB_*` overrides are defined locally, the project uses SQLite automatically so `python manage.py runserver` works out of the box.
+
+#### Static Files
+
+- WhiteNoise is configured for serving static files
+- Run `collectstatic` after deployment
+- Static files are served automatically by WhiteNoise
+
+#### Media Files
+
+- Heroku's filesystem is ephemeral (files are deleted on restart)
+- This project now supports AWS S3 out of the box via `django-storages`.
+- Set `USE_AWS=True` plus the AWS credentials listed above so uploaded product images persist.
+- Bucket objects are stored under the prefix defined by `AWS_LOCATION` (default `media`).
+
+#### Stripe Webhooks
+
+- Update your Stripe webhook URL to: `https://your-app-name.herokuapp.com/payments/webhook/`
+- Use production Stripe keys (`pk_live_` and `sk_live_`) on Heroku
+- Keep test keys (`pk_test_` and `sk_test_`) in your local `.env`
+
+#### Email
+
+- For production, consider using **SendGrid** (Heroku addon) or **Mailgun**
+- Gmail may have rate limits for production use
+
+### Quick Commands
+
+```bash
+# View logs
+heroku logs --tail
+
+# Run Django shell
+heroku run python manage.py shell
+
+# Run any Django command
+heroku run python manage.py <command>
+
+# Open app in browser
+heroku open
+
+# View config vars
+heroku config
+
+# Scale dynos (if needed)
+heroku ps:scale web=1
+```
+
+### Quality Gates & Validation Evidence
+
+Run the following before tagging a release. Capture the console output or validator screenshots and log them in [`docs/evidence/validation-summary.md`](docs/evidence/validation-summary.md) so assessors can confirm the artefacts.
+
+| Check | Command / URL | Purpose |
+| --- | --- | --- |
+| Python style | `flake8 accounts reviews` | Keeps authentication/CRUD code compliant with PEP8. Expand scope when you touch new apps. |
+| Template hygiene | `djlint templates/base.html templates/reviews templates/store/home.html templates/store/about.html templates/store/services.html templates/store/terms.html templates/store/privacy.html templates/404.html --check --profile=django` | Catches malformed HTML on the customer-facing pages touched in this remediation; expand the list as you edit other templates. |
+| Broken links | `npx broken-link-checker https://your-app.herokuapp.com --recursive --exclude www.facebook.com` | Guarantees no `href="#"` placeholders remain in production. |
+| W3C validator | https://validator.w3.org/ | Upload `base.html`, landing pages, and any edited templates after SEO updates. |
+
+### Troubleshooting
+
+#### Static files not loading
+
+```bash
+heroku run python manage.py collectstatic --noinput
+```
+
+#### Database connection issues
+
+- Check if Postgres addon is added: `heroku addons`
+- Verify DATABASE_URL: `heroku config:get DATABASE_URL`
+
+#### Migration errors
+
+```bash
+heroku run python manage.py migrate --run-syncdb
 ```
 
 ### Docker (Optional)
@@ -596,9 +875,109 @@ docker run --env-file .env -p 8000:8000 comfyzone
 
 - Use Elastic Beanstalk or ECS with the Dockerfile above.
 - Point static/media storage to S3 + CloudFront via `django-storages` when scaling beyond single dynos.
-- Configure HTTPS certificates (ACM / Let’s Encrypt) and update `ALLOWED_HOSTS`.
+- Configure HTTPS certificates (ACM / Let's Encrypt) and update `ALLOWED_HOSTS`.
 
-See `DEPLOYMENT.md` for deeper troubleshooting tips (webhooks, logs, dyno scaling).
+---
+
+## Heroku AWS Configuration
+
+### Current Heroku Config Vars
+
+```
+USE_AWS:                 True
+AWS_STORAGE_BUCKET_NAME: hawashmart
+AWS_S3_REGION_NAME:      Europe (Ireland) eu-west-1
+AWS_ACCESS_KEY_ID:       AKIAQRX5V4PXXJFRL2U5
+AWS_SECRET_ACCESS_KEY:   [SET - Hidden for security]
+AWS_LOCATION:            media
+```
+
+### Configuration Analysis
+
+#### ✅ What's Configured Correctly
+
+1. **USE_AWS**: `True` ✅ - AWS is enabled
+2. **Bucket Name**: `hawashmart` ✅ - Matches your bucket
+3. **Region**: `Europe (Ireland) eu-west-1` ✅ - Will be normalized to `eu-west-1`
+4. **Credentials**: Set ✅
+5. **AWS_LOCATION**: `media` ✅ - This is correct
+
+#### 🔍 Path Structure
+
+With your current configuration:
+- `AWS_LOCATION` = `media`
+- `upload_to` = `photos/products/` (after our model fix)
+- **Full path** = `media/photos/products/` ✅
+
+This matches what you said: files should be in `media/photos/products/`
+
+### The Issues
+
+#### Issue 1: Region Name Format
+**Current:** `Europe (Ireland) eu-west-1`  
+**Will be normalized to:** `eu-west-1` ✅
+
+This is fine - the normalization function handles it.
+
+#### Issue 2: Path Mismatch for Existing Files
+**Problem:** Files uploaded BEFORE we changed the model are at:
+- `media/products/` (old path)
+
+**New uploads will go to:**
+- `media/photos/products/` (new path) ✅
+
+#### Issue 3: Permissions
+The bucket likely needs public read permissions for images to load.
+
+### What Needs to Be Done
+
+#### Option 1: Update AWS_LOCATION (Not Recommended)
+If you want to keep old files accessible, you could change:
+```bash
+heroku config:set AWS_LOCATION=media/photos --app comfyzone
+```
+
+But this would break existing file paths. Not recommended.
+
+#### Option 2: Fix Existing Files (Recommended)
+1. Files already uploaded: They're at `media/products/` (old path)
+2. New uploads: Will go to `media/photos/products/` (new path) ✅
+3. Solution: Re-upload existing images OR move them in S3 Console
+
+#### Option 3: Fix Bucket Permissions
+The main issue is likely bucket permissions preventing public access.
+
+### Recommended Actions
+
+1. ✅ **Keep current config** - It's correct for new uploads
+2. ✅ **Fix bucket permissions** - Allow public read access
+3. ✅ **Re-upload or move existing images** - If you have old images at wrong path
+4. ✅ **Verify new uploads work** - Test with a new image upload
+
+### Quick Fix Commands
+
+#### Check if region normalization works:
+The region format `Europe (Ireland) eu-west-1` will be normalized to `eu-west-1` automatically.
+
+#### Verify config on Heroku:
+```bash
+heroku run python manage.py shell --app comfyzone
+```
+
+Then:
+```python
+from django.conf import settings
+print(f"AWS_LOCATION: {settings.AWS_LOCATION}")
+print(f"AWS_S3_REGION_NAME: {settings.AWS_S3_REGION_NAME}")
+print(f"MEDIA_URL: {settings.MEDIA_URL}")
+```
+
+### Summary
+
+✅ **AWS config is correctly set on Heroku**  
+✅ **Path structure will be correct for new uploads**  
+⚠️ **Bucket permissions need to be fixed**  
+⚠️ **Existing files may need to be re-uploaded**
 
 ## Agile Delivery Playbook
 
