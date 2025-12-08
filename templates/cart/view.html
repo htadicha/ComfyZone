@@ -57,22 +57,25 @@
                       {% csrf_token %}
                       <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
                         <div class="input-group-prepend">
-                          <button class="btn btn-outline-black decrease" type="button" onclick="updateQuantity({{ item.id }}, -1)">&minus;</button>
+                          <button class="btn btn-outline-black decrease" type="button" onclick="updateQuantity(event, {{ item.id }}, -1)">&minus;</button>
                         </div>
                         <input type="text" class="form-control text-center quantity-amount" value="{{ item.quantity }}" readonly>
                         <div class="input-group-append">
-                          <button class="btn btn-outline-black increase" type="button" onclick="updateQuantity({{ item.id }}, 1)">&plus;</button>
+                          <button class="btn btn-outline-black increase" type="button" onclick="updateQuantity(event, {{ item.id }}, 1)">&plus;</button>
                         </div>
                       </div>
                     </form>
                   {% else %}
-                    <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
+                    <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;" 
+                         data-item-key="{{ item.item_key }}" 
+                         data-product-id="{{ item.product.id }}"
+                         data-variation-ids="{% for v in item.variations.all %}{{ v.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
                       <div class="input-group-prepend">
-                        <button class="btn btn-outline-black decrease" type="button" onclick="updateSessionQuantity('{{ item.item_key }}', -1)">&minus;</button>
+                        <button class="btn btn-outline-black decrease" type="button" onclick="updateSessionQuantity(event, -1)">&minus;</button>
                       </div>
                       <input type="text" class="form-control text-center quantity-amount" value="{{ item.quantity }}" readonly>
                       <div class="input-group-append">
-                        <button class="btn btn-outline-black increase" type="button" onclick="updateSessionQuantity('{{ item.item_key }}', 1)">&plus;</button>
+                        <button class="btn btn-outline-black increase" type="button" onclick="updateSessionQuantity(event, 1)">&plus;</button>
                       </div>
                     </div>
                   {% endif %}
@@ -156,11 +159,67 @@
 
 {% block extra_js %}
 <script>
-function updateQuantity(itemId, change) {
+function updateQuantity(event, itemId, change) {
+  // Find the button that was clicked
+  const button = event.target;
+  // Find the form containing this button
+  const form = button.closest('form');
+  // Find the quantity input in the same form
+  const quantityInput = form.querySelector('.quantity-amount');
+  
+  if (!quantityInput) {
+    console.error('Quantity input not found');
+    return;
+  }
+  
+  // Get current quantity and calculate new quantity
+  const currentQuantity = parseInt(quantityInput.value) || 1;
+  const newQuantity = Math.max(1, currentQuantity + change);
+  
+  // Create hidden input for quantity if it doesn't exist
+  let quantityHiddenInput = form.querySelector('input[name="quantity"]');
+  if (!quantityHiddenInput) {
+    quantityHiddenInput = document.createElement('input');
+    quantityHiddenInput.type = 'hidden';
+    quantityHiddenInput.name = 'quantity';
+    form.appendChild(quantityHiddenInput);
+  }
+  
+  // Set the new quantity
+  quantityHiddenInput.value = newQuantity;
+  quantityInput.value = newQuantity; // Update visible input too
+  
+  // Submit the form
+  form.submit();
+}
+
+function updateSessionQuantity(event, change) {
+  // Find the button that was clicked
+  const button = event.target;
+  // Find the quantity container
+  const container = button.closest('.quantity-container');
+  // Find the quantity input
+  const quantityInput = container.querySelector('.quantity-amount');
+  
+  if (!quantityInput || !container) {
+    console.error('Quantity input or container not found');
+    return;
+  }
+  
+  // Get current quantity and calculate new quantity
+  const currentQuantity = parseInt(quantityInput.value) || 1;
+  const newQuantity = Math.max(1, currentQuantity + change);
+  
+  // Get data from container
+  const productId = container.getAttribute('data-product-id');
+  const variationIdsStr = container.getAttribute('data-variation-ids');
+  
+  // Create a form to submit the update
   const form = document.createElement('form');
   form.method = 'POST';
-  form.action = `/cart/update/${itemId}/`;
+  form.action = '{% url "cart:update" item_id=0 %}';
   
+  // Get CSRF token
   const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
   const csrfInput = document.createElement('input');
   csrfInput.type = 'hidden';
@@ -168,19 +227,34 @@ function updateQuantity(itemId, change) {
   csrfInput.value = csrf;
   form.appendChild(csrfInput);
   
-  const quantityInput = document.createElement('input');
-  quantityInput.type = 'hidden';
-  quantityInput.name = 'quantity';
-  quantityInput.value = Math.max(1, parseInt(document.querySelector(`input[value="${itemId}"]`)?.value || 1) + change);
-  form.appendChild(quantityInput);
+  // Add quantity
+  const quantityHiddenInput = document.createElement('input');
+  quantityHiddenInput.type = 'hidden';
+  quantityHiddenInput.name = 'quantity';
+  quantityHiddenInput.value = newQuantity;
+  form.appendChild(quantityHiddenInput);
+  
+  // Add product_id
+  const productIdInput = document.createElement('input');
+  productIdInput.type = 'hidden';
+  productIdInput.name = 'product_id';
+  productIdInput.value = productId;
+  form.appendChild(productIdInput);
+  
+  // Add variation_ids if they exist
+  if (variationIdsStr && variationIdsStr.trim() !== '') {
+    const variationIds = variationIdsStr.split(',').filter(id => id.trim() !== '');
+    variationIds.forEach(function(vid) {
+      const variationInput = document.createElement('input');
+      variationInput.type = 'hidden';
+      variationInput.name = 'variations';
+      variationInput.value = vid.trim();
+      form.appendChild(variationInput);
+    });
+  }
   
   document.body.appendChild(form);
   form.submit();
-}
-
-function updateSessionQuantity(itemKey, change) {
-  // This would need AJAX or form submission
-  location.reload();
 }
 </script>
 {% endblock %}
