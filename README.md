@@ -18,6 +18,10 @@
 - [Wireframes & Visual References](#wireframes--visual-references)
 - [Key Highlights](#key-highlights)
 - [Features](#features)
+  - [Visitor Functionalities](#-visitor-functionalities)
+  - [Registered User Functionalities](#-registered-user-functionalities)
+  - [Admin Functionalities](#-admin-functionalities)
+  - [Additional Features Available to All Users](#-additional-features-available-to-all-users)
 - [Technology Stack](#technology-stack)
 - [Architecture](#architecture)
 - [Database Schema](#database-schema)
@@ -91,57 +95,239 @@ Storefront Admin (templates/store/admin/*.html)
 
 ## Features
 
-### 🛍️ Product Catalog
+This section details all functionalities available to different user types on the ComfyZone platform.
 
-- Category tree with parent/child relationships and automatic slugging (`store.models.Category`).
-- Feature flags (`is_featured`, `is_active`) and SEO metadata on products.
-- Product variations for color/size/material with price adjustments (`ProductVariation`).
-- Multi-image galleries with primary image enforcement (`ProductImage`).
-- Staff-only admin screens for CRUD, media uploads, and status toggles.
+---
 
-### 🛒 Cart & Checkout
+## 👥 Visitor Functionalities
 
-- Guest carts stored in the session plus authenticated carts persisted via `cart.Cart`.
-- Cart merge on login handled in `cart.utils.merge_carts`.
-- Variation-aware pricing and quantity validation.
-- Checkout summary calculates 10% tax + configurable shipping before Stripe handoff.
+Visitors (non-authenticated users) can browse and interact with the storefront with limited functionality.
 
-### 📦 Orders & Payments
+### User Registration
 
-- Order lifecycle: New → Accepted → Completed/Cancelled with helper badges.
-- Shipping + billing snapshots stored per order in case the address entry is deleted later.
-- Stripe Checkout integration with server-side order creation, webhooks, and idempotent status sync (`payments.views`).
-- Automatic confirmation email via `Order.send_confirmation_email`.
+Visitors can create an account by providing their email address, name, and password. The registration process includes:
 
-### 👤 Accounts & Profiles
+- **Email-based registration**: Users register using their email address as the username
+- **Email verification**: After registration, users receive a verification email with a secure token
+- **Account activation**: Users must verify their email before they can log in
+- **Resend verification**: Option to request a new verification email if the original is not received
 
-- Custom `accounts.User` model (email-as-username) with verification tokens.
-- Profile + address book management, default address handling, and cascading updates.
-- Login/registration templates aligned with Bootstrap 5.
+![User Registration](media/site_functionality_pictures/user_registration.png)
 
-### ⭐ Reviews & Ratings
+*Screenshot: User registration form with email verification workflow*
 
-- Moderated reviews with verified-purchase detection (`reviews.models.Review`).
-- Inline editing/deletion for the author, aggregated scores on product detail pages.
-- Helpful counts + pagination-ready querysets.
+### Product Browsing & Discovery
 
-### 🔍 Search, Filtering & SEO
+- **Product catalog**: Browse all available products with images, prices, and descriptions
+- **Product details**: View detailed product information including:
+  - Multiple product images in a gallery
+  - Product variations (color, size, material) with price adjustments
+  - Product specifications and descriptions
+  - Customer reviews and ratings (read-only for visitors)
 
-- Server-side search against name, description, and short_description fields.
-- Price, stock, category, availability, and sort-by filters in the shop view.
-- Automatic sitemap + robots via the `core` app; per-page meta tags in templates.
+![Product Detail](media/site_functionality_pictures/product_detail.png)
 
-### 📣 Marketing & Engagement
+*Screenshot: Product detail page with image gallery, variations, and reviews*
 
-- Footer newsletter form posts to `marketing.subscribe` with duplicate detection/resubscribe logic.
-- `NewsletterSubscriber` model keeps unsubscribed records for compliance.
-- Prebuilt `templates/robots.txt` and sitemap entries support search engines.
+### Shopping Cart (Guest Session)
 
-### 📱 Responsive & Accessible UI
+- **Session-based cart**: Add products to cart without creating an account
+- **Cart persistence**: Cart items persist during the browser session
+- **Cart merge on login**: Guest cart items automatically merge with user cart upon login
+- **Quantity management**: Increase/decrease item quantities using +/- buttons
+- **Item removal**: Remove items from cart before checkout
 
-- Bootstrap 5, Font Awesome 6, Google Material icons, and Feather icons where appropriate.
-- Tiny Slider for hero/product carousels; all templates extend `base.html`.
-- Context processor injects cart counts globally for a cohesive UX.
+![Shopping Cart](media/site_functionality_pictures/cart.png)
+
+*Screenshot: Shopping cart page with quantity controls and item management*
+
+### Showroom Consultation Request
+
+Visitors can request a personalized showroom consultation with interior design specialists:
+
+- **Lead capture form**: Submit contact information and project details
+- **Interest selection**: Specify product or service of interest
+- **Consent management**: GDPR-compliant consent tracking
+- **Response guarantee**: Specialists respond within one business day
+
+![Showroom Consultation](media/site_functionality_pictures/showroom_consulation.png)
+
+*Screenshot: Showroom consultation request form*
+
+---
+
+## 🔐 Registered User Functionalities
+
+Authenticated users have access to additional features beyond visitor capabilities.
+
+### User Authentication
+
+- **Secure login**: Email and password-based authentication
+- **Email verification**: Required before first login
+- **Password security**: Secure password hashing and validation
+- **Session management**: Automatic session handling with secure cookies
+
+![User Login](media/site_functionality_pictures/registered_user_login.png)
+
+*Screenshot: User login page with email verification reminder*
+
+### Persistent Shopping Cart
+
+- **Database-backed cart**: Cart items persist across sessions and devices
+- **Cart synchronization**: Automatic merge of guest cart items on login
+- **Cart management**: Full CRUD operations on cart items
+- **Variation support**: Add products with specific variations (color, size, etc.)
+
+### Product Reviews & Ratings
+
+Authenticated users who have purchased products can:
+
+- **Write reviews**: Submit detailed product reviews with ratings (1-5 stars)
+- **Edit reviews**: Modify existing reviews before or after approval
+- **Delete reviews**: Remove their own reviews
+- **Verified purchase badge**: Reviews from verified purchases are marked
+- **Review moderation**: Reviews require admin approval before publication
+
+![Product Review](media/site_functionality_pictures/product_review.png)
+
+*Screenshot: Product review form with rating and moderation status*
+
+### Checkout & Payment
+
+- **Address management**: Save multiple shipping and billing addresses
+- **Default address**: Set preferred addresses for faster checkout
+- **Order summary**: Review cart items, quantities, and totals before payment
+- **Tax calculation**: Automatic 10% tax calculation
+- **Stripe integration**: Secure payment processing via Stripe Checkout
+- **Payment confirmation**: Real-time payment status updates
+
+![Checkout Page](media/site_functionality_pictures/checkout.png)
+
+*Screenshot: Checkout page with address selection and order summary*
+
+![Payment Section](media/site_functionality_pictures/payment_section.png)
+
+*Screenshot: Payment processing interface with Stripe integration*
+
+### Order Management
+
+- **Order history**: View all past orders with status tracking
+- **Order details**: Detailed view of each order including:
+  - Order number and date
+  - Items purchased with quantities and prices
+  - Shipping and billing addresses (snapshotted)
+  - Payment status and transaction details
+  - Order status (New → Accepted → Completed/Cancelled)
+- **Order confirmation**: Email confirmation sent automatically after successful payment
+
+![Order History](media/site_functionality_pictures/order_history.png)
+
+*Screenshot: Order history page listing all user orders*
+
+![Order Details](media/site_functionality_pictures/order_hsitory_details.png)
+
+*Screenshot: Detailed order view with items, addresses, and payment information*
+
+![Order Confirmation](media/site_functionality_pictures/order_confirmation.png)
+
+*Screenshot: Order confirmation page after successful payment*
+
+### User Profile Management
+
+- **Profile editing**: Update personal information (name, email)
+- **Address book**: Manage multiple shipping and billing addresses
+- **Default address**: Set and change default addresses
+- **Account security**: Change password and manage account settings
+
+---
+
+## 👨‍💼 Admin Functionalities
+
+Staff users have access to administrative tools for managing the storefront.
+
+### Storefront Product Management
+
+Admins can manage products directly from the storefront without accessing Django admin:
+
+- **Product CRUD**: Create, read, update, and delete products
+- **Product status**: Toggle product active/inactive status
+- **Feature flags**: Mark products as featured for homepage display
+- **Image management**: Upload and manage product images with primary image selection
+- **Variation management**: Add and configure product variations (color, size, material)
+- **Bulk operations**: Search and filter products for efficient management
+
+![Admin Panel from Site](media/site_functionality_pictures/admin_panel_from_site.png)
+
+*Screenshot: Storefront admin interface for product management*
+
+### Admin Dashboard
+
+- **Product overview**: View all products with status indicators
+- **Quick actions**: Fast access to create, edit, or delete products
+- **Search and filter**: Find products quickly using search and filter options
+- **Status management**: Bulk status updates for products
+- **Analytics**: View product performance metrics
+
+![Admin Dashboard](media/site_functionality_pictures/admin_panel_dashboard.png)
+
+*Screenshot: Admin dashboard with product management tools*
+
+### Marketing Lead Management
+
+- **Lead dashboard**: View all marketing leads captured from the website
+- **Lead status tracking**: Track lead status (New → Contacted → Qualified → Won/Lost)
+- **Lead assignment**: Assign leads to team members
+- **Export functionality**: Export leads to CSV for CRM integration
+- **Newsletter management**: View and manage newsletter subscribers
+- **Consent tracking**: Monitor and log user consent for GDPR compliance
+
+### Order Administration
+
+- **Order management**: View and manage all customer orders
+- **Status updates**: Update order status (New → Accepted → Completed/Cancelled)
+- **Order details**: Access complete order information including customer details
+- **Payment tracking**: Monitor payment status and transaction details
+
+### Content Management
+
+- **Category management**: Create and manage product categories with parent/child relationships
+- **SEO management**: Set meta descriptions, keywords, and OG tags for products
+- **Review moderation**: Approve or reject customer reviews
+- **Content updates**: Update site content, terms, privacy policy, etc.
+
+---
+
+## 🔍 Additional Features Available to All Users
+
+### Search & Filtering
+
+- **Full-text search**: Search products by name, description, or keywords
+- **Category filtering**: Filter products by category and subcategory
+- **Price range**: Filter by minimum and maximum price
+- **Stock status**: Filter by in-stock or out-of-stock items
+- **Sorting options**: Sort by newest, price (low to high), price (high to low), name, or rating
+
+### SEO & Discoverability
+
+- **Sitemap generation**: Automatic XML sitemap at `/sitemap.xml`
+- **Robots.txt**: Search engine directives at `/robots.txt`
+- **Meta tags**: SEO-optimized meta descriptions and keywords
+- **Open Graph tags**: Social media sharing optimization
+- **Canonical URLs**: Prevent duplicate content issues
+
+### Newsletter Subscription
+
+- **Footer subscription**: Newsletter signup form in site footer
+- **Double opt-in**: Email confirmation required for subscription
+- **Consent logging**: GDPR-compliant consent tracking
+- **Unsubscribe**: Easy unsubscribe option in all emails
+
+### Responsive Design
+
+- **Mobile-first**: Fully responsive design for all screen sizes
+- **Touch-friendly**: Optimized for mobile and tablet interactions
+- **Accessibility**: ARIA labels and keyboard navigation support
+- **Cross-browser**: Compatible with all modern browsers
 
 ## Technology Stack
 
