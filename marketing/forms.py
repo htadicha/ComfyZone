@@ -41,7 +41,11 @@ class MarketingLeadForm(forms.ModelForm):
         model = MarketingLead
         fields = ["name", "email", "phone", "interest", "message", "consent"]
         widgets = {
-            "message": forms.Textarea(attrs={"rows": 4}),
+            "message": forms.Textarea(attrs={"rows": 4, "placeholder": "Tell us what you're looking for or any questions you have..."}),
+            "interest": forms.TextInput(attrs={"placeholder": "e.g., Sofas, Dining Tables, Consultation"}),
+            "name": forms.TextInput(attrs={"placeholder": "Your full name"}),
+            "email": forms.EmailInput(attrs={"placeholder": "your.email@example.com"}),
+            "phone": forms.TextInput(attrs={"placeholder": "Optional phone number"}),
         }
         help_texts = {
             "consent": "I consent to being contacted about ComfyZone products and services.",
@@ -51,6 +55,7 @@ class MarketingLeadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["consent"].required = True
         self.helper = FormHelper()
+        self.helper.form_method = "post"
         self.helper.layout = Layout(
             Row(
                 Column("name", css_class="col-md-6"),

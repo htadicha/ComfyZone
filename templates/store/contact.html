@@ -1,20 +1,107 @@
 {% extends "base.html" %}
 {% load static %}
+{% load crispy_forms_tags %}
 
-{% block title %}Contact Us - Furniture Store{% endblock %}
+{% block title %}Contact Us - ComfyZone{% endblock %}
+{% block meta_description %}Get in touch with ComfyZone. Reach out via phone, email, or our contact form. Our team is here to help you find the perfect furniture for your home.{% endblock %}
 
 {% block content %}
+<!-- Start Hero Section -->
 <div class="hero">
   <div class="container">
     <div class="row justify-content-between">
       <div class="col-lg-5">
         <div class="intro-excerpt">
           <h1>Contact Us</h1>
+          <p class="mb-4">Have a question or need assistance? We're here to help. Reach out to us through any of the methods below.</p>
         </div>
       </div>
     </div>
   </div>
 </div>
+<!-- End Hero Section -->
+
+<!-- Start Contact Information Cards Section -->
+<div class="untree_co-section">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-lg-5 mx-auto text-center">
+        <h2 class="section-title">Get in Touch</h2>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Phone Card -->
+      <div class="col-6 col-md-6 col-lg-3 mb-4">
+        <div class="feature">
+          <div class="icon">
+            <i class="fas fa-phone-alt"></i>
+          </div>
+          <h3>Phone</h3>
+          <p>Call us anytime</p>
+          <p class="mb-0"><a href="tel:+1234567890" class="text-decoration-none">+1 (234) 567-890</a></p>
+        </div>
+      </div>
+
+      <!-- Email Card -->
+      <div class="col-6 col-md-6 col-lg-3 mb-4">
+        <div class="feature">
+          <div class="icon">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <h3>Email</h3>
+          <p>Send us an email</p>
+          <p class="mb-0"><a href="mailto:support@comfyzone.app" class="text-decoration-none">support@comfyzone.app</a></p>
+        </div>
+      </div>
+
+      <!-- Address Card -->
+      <div class="col-6 col-md-6 col-lg-3 mb-4">
+        <div class="feature">
+          <div class="icon">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <h3>Address</h3>
+          <p>Visit our showroom</p>
+          <p class="mb-0">123 Furniture Street<br>Design District, NY 10001</p>
+        </div>
+      </div>
+
+      <!-- Hours Card -->
+      <div class="col-6 col-md-6 col-lg-3 mb-4">
+        <div class="feature">
+          <div class="icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h3>Business Hours</h3>
+          <p>When we're open</p>
+          <p class="mb-0">Mon - Fri: 9am - 6pm<br>Sat - Sun: 10am - 4pm</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Contact Information Cards Section -->
+
+<!-- Start Contact Form Section -->
+<div class="untree_co-section bg-light">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-7 mx-auto">
+        <div class="card shadow-sm">
+          <div class="card-body p-5">
+            <h2 class="mb-4">Send us a Message</h2>
+            <p class="text-muted mb-4">Fill out the form below and we'll get back to you as soon as possible.</p>
+            
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {% crispy form %}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End Contact Form Section -->
 {% endblock %}
-
-

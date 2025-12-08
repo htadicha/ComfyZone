@@ -100,7 +100,7 @@
 
   <!-- Messages -->
   {% if messages %}
-    <div class="container mt-3">
+    <div class="container mt-3" id="messages-container">
       {% for message in messages %}
         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
           {{ message }}
@@ -293,6 +293,39 @@
         cleanHash();
       }
     })();
+    
+    // Remove messages container when all alerts are dismissed
+    document.addEventListener('DOMContentLoaded', function() {
+      var messagesContainer = document.getElementById('messages-container');
+      if (messagesContainer) {
+        var alerts = messagesContainer.querySelectorAll('.alert');
+        
+        function hideContainerIfEmpty() {
+          // Check if all alerts are dismissed (faded out)
+          var visibleAlerts = Array.from(alerts).filter(function(alert) {
+            return alert.classList.contains('show') || 
+                   (!alert.classList.contains('fade') && alert.offsetHeight > 0);
+          });
+          
+          if (visibleAlerts.length === 0) {
+            // Wait for fade animation to complete, then hide container
+            setTimeout(function() {
+              messagesContainer.style.display = 'none';
+              messagesContainer.style.margin = '0';
+              messagesContainer.style.padding = '0';
+              messagesContainer.style.height = '0';
+            }, 350); // Match Bootstrap's fade duration (150ms) with buffer
+          }
+        }
+        
+        alerts.forEach(function(alert) {
+          // Listen for Bootstrap's closed event
+          alert.addEventListener('closed.bs.alert', function() {
+            hideContainerIfEmpty();
+          });
+        });
+      }
+    });
   </script>
   {% block extra_js %}{% endblock %}
 </body>

@@ -171,8 +171,23 @@ def services(request):
 
 
 def contact(request):
-    """Contact page."""
-    return render(request, "store/contact.html")
+    """Contact page with form."""
+    from marketing.forms import MarketingLeadForm
+    from marketing.views import _notify_marketing_team
+    
+    if request.method == "POST":
+        form = MarketingLeadForm(request.POST)
+        if form.is_valid():
+            lead = form.save(commit=False)
+            lead.source = "Contact Page"
+            lead.save()
+            _notify_marketing_team(lead)
+            messages.success(request, "Thanks! A specialist will contact you within one business day.")
+            return redirect("store:contact")
+    else:
+        form = MarketingLeadForm()
+    
+    return render(request, "store/contact.html", {"form": form})
 
 
 def terms(request):

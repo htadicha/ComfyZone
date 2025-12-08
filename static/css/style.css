@@ -356,6 +356,11 @@ a {
       border-radius: 50%;
       right: -8px;
       bottom: 0; }
+    .feature .icon i {
+      font-size: 48px;
+      color: #3b5d50;
+      position: relative;
+      z-index: 1; }
   .feature h3 {
     font-size: 14px;
     color: #2f2f2f; }
@@ -802,6 +807,28 @@ textarea {
   .footer-section .row > .col-lg-4:last-child {
     padding-right: 220px;
     padding-left: 0; } }
+
+/* Messages container - collapse when empty */
+#messages-container {
+  transition: margin 0.3s ease, padding 0.3s ease;
+}
+
+#messages-container:empty,
+#messages-container[style*="display: none"] {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Ensure dismissed alerts don't take up space */
+.alert.fade:not(.show) {
+  display: none !important;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
 /* Ensure button text is visible in consultation card with smaller text */
 .footer-section .card.shadow-sm .btn-outline-primary,
