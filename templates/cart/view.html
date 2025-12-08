@@ -55,13 +55,13 @@
                   {% if user.is_authenticated %}
                     <form method="post" action="{% url 'cart:update' item_id=item.id %}" class="d-inline">
                       {% csrf_token %}
-                      <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
+                      <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;" data-item-id="{{ item.id }}">
                         <div class="input-group-prepend">
-                          <button class="btn btn-outline-black decrease" type="button" onclick="updateQuantity(event, {{ item.id }}, -1)">&minus;</button>
+                          <button class="btn btn-outline-black decrease" type="button" data-action="decrease">&minus;</button>
                         </div>
                         <input type="text" class="form-control text-center quantity-amount" value="{{ item.quantity }}" readonly>
                         <div class="input-group-append">
-                          <button class="btn btn-outline-black increase" type="button" onclick="updateQuantity(event, {{ item.id }}, 1)">&plus;</button>
+                          <button class="btn btn-outline-black increase" type="button" data-action="increase">&plus;</button>
                         </div>
                       </div>
                     </form>
@@ -159,38 +159,121 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle quantity updates for authenticated users
+  document.querySelectorAll('.quantity-container[data-item-id] button[data-action]').forEach(function(button) {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const container = button.closest('.quantity-container');
+      const form = container.closest('form');
+      const itemId = container.getAttribute('data-item-id');
+      const action = button.getAttribute('data-action');
+      const change = action === 'increase' ? 1 : -1;
+      
+      if (!form) {
+        console.error('Form not found for item:', itemId);
+        return false;
+      }
+      
+      // Find the quantity input
+      const quantityInput = container.querySelector('.quantity-amount');
+      
+      if (!quantityInput) {
+        console.error('Quantity input not found for item:', itemId);
+        return false;
+      }
+      
+      // Get current quantity and calculate new quantity
+      const currentQuantity = parseInt(quantityInput.value) || 1;
+      const newQuantity = Math.max(1, currentQuantity + change);
+      
+      console.log('Updating quantity:', {
+        itemId: itemId,
+        currentQuantity: currentQuantity,
+        change: change,
+        newQuantity: newQuantity
+      });
+      
+      // Create or update hidden input for quantity
+      let quantityHiddenInput = form.querySelector('input[name="quantity"]');
+      if (!quantityHiddenInput) {
+        quantityHiddenInput = document.createElement('input');
+        quantityHiddenInput.type = 'hidden';
+        quantityHiddenInput.name = 'quantity';
+        form.appendChild(quantityHiddenInput);
+      }
+      
+      // Set the new quantity
+      quantityHiddenInput.value = newQuantity;
+      quantityInput.value = newQuantity;
+      
+      // Disable the button to prevent double submission
+      button.disabled = true;
+      
+      // Submit the form
+      console.log('Submitting form with quantity:', newQuantity);
+      form.submit();
+      
+      return false;
+    });
+  });
+});
+
+// Keep the old function for backwards compatibility with inline handlers
 function updateQuantity(event, itemId, change) {
-  // Find the button that was clicked
-  const button = event.target;
-  // Find the form containing this button
-  const form = button.closest('form');
-  // Find the quantity input in the same form
-  const quantityInput = form.querySelector('.quantity-amount');
-  
-  if (!quantityInput) {
-    console.error('Quantity input not found');
-    return;
+  try {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    const button = event ? (event.target || event.currentTarget) : (window.event ? window.event.srcElement : null);
+    
+    if (!button) {
+      console.error('Button not found');
+      return false;
+    }
+    
+    const form = button.closest('form');
+    
+    if (!form) {
+      console.error('Form not found for item:', itemId);
+      return false;
+    }
+    
+    const quantityInput = form.querySelector('.quantity-amount');
+    
+    if (!quantityInput) {
+      console.error('Quantity input not found for item:', itemId);
+      return false;
+    }
+    
+    const currentQuantity = parseInt(quantityInput.value) || 1;
+    const newQuantity = Math.max(1, currentQuantity + change);
+    
+    let quantityHiddenInput = form.querySelector('input[name="quantity"]');
+    if (!quantityHiddenInput) {
+      quantityHiddenInput = document.createElement('input');
+      quantityHiddenInput.type = 'hidden';
+      quantityHiddenInput.name = 'quantity';
+      form.appendChild(quantityHiddenInput);
+    }
+    
+    quantityHiddenInput.value = newQuantity;
+    quantityInput.value = newQuantity;
+    
+    button.disabled = true;
+    
+    console.log('Submitting form with quantity:', newQuantity);
+    form.submit();
+    
+    return false;
+  } catch (error) {
+    console.error('Error updating quantity:', error);
+    return false;
   }
-  
-  // Get current quantity and calculate new quantity
-  const currentQuantity = parseInt(quantityInput.value) || 1;
-  const newQuantity = Math.max(1, currentQuantity + change);
-  
-  // Create hidden input for quantity if it doesn't exist
-  let quantityHiddenInput = form.querySelector('input[name="quantity"]');
-  if (!quantityHiddenInput) {
-    quantityHiddenInput = document.createElement('input');
-    quantityHiddenInput.type = 'hidden';
-    quantityHiddenInput.name = 'quantity';
-    form.appendChild(quantityHiddenInput);
-  }
-  
-  // Set the new quantity
-  quantityHiddenInput.value = newQuantity;
-  quantityInput.value = newQuantity; // Update visible input too
-  
-  // Submit the form
-  form.submit();
 }
 
 function updateSessionQuantity(event, change) {
