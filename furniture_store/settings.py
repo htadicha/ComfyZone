@@ -249,7 +249,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 if not DEBUG:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-USE_AWS = config("USE_AWS", default=False, cast=bool)
+USE_AWS = True
 
 if USE_AWS:
     # AWS S3 Configuration for Production - Media files only
@@ -257,7 +257,11 @@ if USE_AWS:
     AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
     raw_location = config("AWS_LOCATION", default="media")
-    AWS_LOCATION = (raw_location.strip().strip("/") or "media") if raw_location else "media"
+    normalized_location = raw_location.strip().strip("/") if raw_location else "media"
+    # Heroku can sometimes prepend "app/" to paths; strip it out to avoid wrong prefixes.
+    if normalized_location.startswith("app/"):
+        normalized_location = normalized_location[4:]
+    AWS_LOCATION = normalized_location or "media"
     # Extract region code (e.g., 'eu-west-1' from 'Europe (Ireland) eu-west-1')
     region_config = config("AWS_S3_REGION_NAME", default="")
     AWS_S3_REGION_NAME = region_config.split()[-1] if region_config else ""
