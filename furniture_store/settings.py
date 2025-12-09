@@ -266,7 +266,7 @@ if USE_AWS:
     else:
         AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
     AWS_S3_FILE_OVERWRITE = False
-    # AWS_DEFAULT_ACL is set by MediaStorage class, don't override here
+    # AWS_DEFAULT_ACL is set by MediaStorage class to 'public-read'
     AWS_QUERYSTRING_AUTH = (
         False  # Don't use query string authentication for public files
     )
@@ -276,7 +276,7 @@ if USE_AWS:
 
     # Media files go to S3 with public-read access
     # Note: Must use 'Hawashmart' (capital H) to match the directory name
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    DEFAULT_FILE_STORAGE = "furniture_store.storage.MediaStorage"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
     MEDIA_ROOT = BASE_DIR / "media"
 
