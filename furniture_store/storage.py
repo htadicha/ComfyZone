@@ -29,11 +29,11 @@ class MediaStorage(S3Boto3Storage):
         if not self.location:
             self.location = getattr(settings, 'AWS_LOCATION', 'media')
     
-    def _get_write_parameters(self, content):
+    def _get_write_parameters(self, name, content):
         """
         Override to ensure ACL is always set to public-read.
         """
-        params = super()._get_write_parameters(content)
+        params = super()._get_write_parameters(name, content)
         # Force ACL to public-read
         params['ACL'] = 'public-read'
         return params
