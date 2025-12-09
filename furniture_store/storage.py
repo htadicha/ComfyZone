@@ -20,6 +20,13 @@ class MediaStorage(S3Boto3Storage):
     default_acl = 'public-read'
     file_overwrite = False
     
+    def __init__(self, *args, **kwargs):
+        """Initialize with location from settings."""
+        super().__init__(*args, **kwargs)
+        # Ensure location is set from AWS_LOCATION
+        if not self.location:
+            self.location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
+    
     def _get_write_parameters(self, content):
         """
         Override to ensure ACL is always set to public-read.
@@ -38,17 +45,18 @@ class MediaStorage(S3Boto3Storage):
         name = super()._save(name, content)
         
         # Get the full S3 key for explicit ACL setting (backup)
-        # The name returned might or might not include location prefix
-        aws_location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
+        # django-storages returns name without location, but stores with location prefix
+        # Use the storage's location property to construct the full key
+        location = self.location.strip('/') if self.location else getattr(settings, 'AWS_LOCATION', 'media').strip('/')
         
-        # Construct S3 key - django-storages stores name without location prefix
-        # but we need the full key with location
-        if name.startswith(aws_location + '/'):
+        # Construct S3 key - the name returned from super()._save() doesn't include location
+        # but the actual file in S3 is stored with location prefix
+        if name.startswith(location + '/'):
             s3_key = name
         elif name.startswith('/'):
-            s3_key = f"{aws_location}{name}"
+            s3_key = f"{location}{name}"
         else:
-            s3_key = f"{aws_location}/{name}"
+            s3_key = f"{location}/{name}" if location else name
         
         # Explicitly set ACL to public-read using boto3 (backup mechanism)
         try:
