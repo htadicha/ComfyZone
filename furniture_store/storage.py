@@ -52,8 +52,10 @@ class MediaStorage(S3Boto3Storage):
         if hasattr(content, 'seek'):
             content.seek(0)
         
-        logger.info(f"Starting upload for file: {name}, location: {location}")
-        logger.info(f"Storage class: {self.__class__.__name__}, bucket: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'NOT SET')}")
+        # Log at ERROR level to ensure it shows up
+        logger.error(f"[STORAGE] Starting upload for file: {name}, location: {location}")
+        logger.error(f"[STORAGE] Storage class: {self.__class__.__name__}, bucket: {getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'NOT SET')}")
+        logger.error(f"[STORAGE] USE_AWS: {getattr(settings, 'USE_AWS', False)}")
         
         # Call parent _save to upload the file (this should use ACL from _get_write_parameters)
         try:
