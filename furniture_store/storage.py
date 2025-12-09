@@ -41,8 +41,13 @@ class MediaStorage(S3Boto3Storage):
         Override _save to ensure ACL is set to public-read after upload.
         Uses parent's _save but then explicitly sets ACL as backup.
         """
-        # Call parent _save to upload the file (this should use ACL from _get_write_parameters)
-        name = super()._save(name, content)
+        try:
+            # Call parent _save to upload the file (this should use ACL from _get_write_parameters)
+            name = super()._save(name, content)
+            logger.info(f"File uploaded successfully: {name}")
+        except Exception as e:
+            logger.error(f"Failed to upload file {name} to S3: {e}")
+            raise
         
         # Get the full S3 key for explicit ACL setting (backup)
         # django-storages returns name without location, but stores with location prefix
@@ -58,7 +63,7 @@ class MediaStorage(S3Boto3Storage):
         else:
             s3_key = f"{location}/{name}" if location else name
         
-        # Explicitly set ACL to public-read using boto3 (backup mechanism)
+        # Verify file exists in S3 before setting ACL
         try:
             s3_client = boto3.client(
                 's3',
@@ -68,6 +73,23 @@ class MediaStorage(S3Boto3Storage):
             )
             
             bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
+            
+            # Verify file exists
+            try:
+                s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+                logger.info(f"Verified file exists in S3: {s3_key}")
+            except ClientError as e:
+                if e.response['Error']['Code'] == '404':
+                    logger.error(f"File not found in S3 after upload: {s3_key}")
+                    # Try alternative key format
+                    alt_key = name if not name.startswith(location) else name
+                    try:
+                        s3_client.head_object(Bucket=bucket_name, Key=alt_key)
+                        s3_key = alt_key
+                        logger.info(f"Found file with alternative key: {s3_key}")
+                    except:
+                        logger.error(f"File not found with alternative key either: {alt_key}")
+                        return name  # Return name even if we can't set ACL
             
             # Set ACL to public-read
             s3_client.put_object_acl(
