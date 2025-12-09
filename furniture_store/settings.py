@@ -294,7 +294,18 @@ if USE_AWS:
     }
 
     # Media files go to S3 with public-read access
+    # Django 5.x uses STORAGES instead of DEFAULT_FILE_STORAGE
+    STORAGES = {
+        "default": {
+            "BACKEND": "furniture_store.storage.MediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    # Also set DEFAULT_FILE_STORAGE for backwards compatibility
     DEFAULT_FILE_STORAGE = "furniture_store.storage.MediaStorage"
+    
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
     MEDIA_ROOT = BASE_DIR / "media"
     
@@ -303,7 +314,7 @@ if USE_AWS:
     print(f"[SETTINGS]   Bucket: {AWS_STORAGE_BUCKET_NAME}", file=sys.stderr)
     print(f"[SETTINGS]   Region: {AWS_S3_REGION_NAME}", file=sys.stderr)
     print(f"[SETTINGS]   Location: {AWS_LOCATION}", file=sys.stderr)
-    print(f"[SETTINGS]   DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}", file=sys.stderr)
+    print(f"[SETTINGS]   STORAGES[default]: {STORAGES['default']['BACKEND']}", file=sys.stderr)
 
     # Static files use WhiteNoise (works better on Heroku)
     STATIC_URL = "/static/"
@@ -311,8 +322,6 @@ if USE_AWS:
     STATICFILES_DIRS = [
         BASE_DIR / "static",
     ]
-    # Use Django's default storage - WhiteNoise middleware handles compression
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
     # WhiteNoise configuration for better static file serving
     WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find files in STATICFILES_DIRS
@@ -327,12 +336,21 @@ if not USE_AWS:
     ]
     MEDIA_URL = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
-    # Use Django's default storage - WhiteNoise middleware handles compression
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    
+    # Django 5.x uses STORAGES instead of DEFAULT_FILE_STORAGE
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
     
     print(f"[SETTINGS] Using local FileSystemStorage for media files", file=sys.stderr)
     print(f"[SETTINGS]   MEDIA_URL: {MEDIA_URL}", file=sys.stderr)
     print(f"[SETTINGS]   MEDIA_ROOT: {MEDIA_ROOT}", file=sys.stderr)
+    print(f"[SETTINGS]   STORAGES[default]: {STORAGES['default']['BACKEND']}", file=sys.stderr)
 
     # WhiteNoise configuration for better static file serving
     WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find files in STATICFILES_DIRS
