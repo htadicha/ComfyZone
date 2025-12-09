@@ -249,13 +249,27 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 if not DEBUG:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-USE_AWS = True
+# Read USE_AWS from environment variable (must be 'true', 'True', '1', 'yes', etc.)
+USE_AWS = config('USE_AWS', default=False, cast=bool)
+
+# Log the USE_AWS value for debugging on Heroku
+import sys
+print(f"[SETTINGS] USE_AWS = {USE_AWS}", file=sys.stderr)
 
 if USE_AWS:
     # AWS S3 Configuration for Production - Media files only
-    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+    AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
+    AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
+    AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
+    
+    # Validate AWS settings are present
+    if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME]):
+        print(f"[SETTINGS] WARNING: USE_AWS=True but AWS credentials are missing!", file=sys.stderr)
+        print(f"[SETTINGS]   AWS_ACCESS_KEY_ID: {'set' if AWS_ACCESS_KEY_ID else 'MISSING'}", file=sys.stderr)
+        print(f"[SETTINGS]   AWS_SECRET_ACCESS_KEY: {'set' if AWS_SECRET_ACCESS_KEY else 'MISSING'}", file=sys.stderr)
+        print(f"[SETTINGS]   AWS_STORAGE_BUCKET_NAME: {'set' if AWS_STORAGE_BUCKET_NAME else 'MISSING'}", file=sys.stderr)
+        print(f"[SETTINGS] Falling back to local FileSystemStorage!", file=sys.stderr)
+        USE_AWS = False  # Disable AWS if credentials are missing
     raw_location = config("AWS_LOCATION", default="media")
     normalized_location = raw_location.strip().strip("/") if raw_location else "media"
     # Heroku can sometimes prepend "app/" to paths; strip it out to avoid wrong prefixes.
@@ -280,10 +294,16 @@ if USE_AWS:
     }
 
     # Media files go to S3 with public-read access
-    # Note: Must use 'Hawashmart' (capital H) to match the directory name
     DEFAULT_FILE_STORAGE = "furniture_store.storage.MediaStorage"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
     MEDIA_ROOT = BASE_DIR / "media"
+    
+    # Log successful S3 configuration
+    print(f"[SETTINGS] S3 Storage configured successfully!", file=sys.stderr)
+    print(f"[SETTINGS]   Bucket: {AWS_STORAGE_BUCKET_NAME}", file=sys.stderr)
+    print(f"[SETTINGS]   Region: {AWS_S3_REGION_NAME}", file=sys.stderr)
+    print(f"[SETTINGS]   Location: {AWS_LOCATION}", file=sys.stderr)
+    print(f"[SETTINGS]   DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}", file=sys.stderr)
 
     # Static files use WhiteNoise (works better on Heroku)
     STATIC_URL = "/static/"
@@ -297,7 +317,8 @@ if USE_AWS:
     # WhiteNoise configuration for better static file serving
     WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find files in STATICFILES_DIRS
     WHITENOISE_AUTOREFRESH = True  # Auto-refresh in development
-else:
+
+if not USE_AWS:
     # Local Static and Media files configuration
     STATIC_URL = "/static/"
     STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -308,6 +329,10 @@ else:
     MEDIA_ROOT = BASE_DIR / "media"
     # Use Django's default storage - WhiteNoise middleware handles compression
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    
+    print(f"[SETTINGS] Using local FileSystemStorage for media files", file=sys.stderr)
+    print(f"[SETTINGS]   MEDIA_URL: {MEDIA_URL}", file=sys.stderr)
+    print(f"[SETTINGS]   MEDIA_ROOT: {MEDIA_ROOT}", file=sys.stderr)
 
     # WhiteNoise configuration for better static file serving
     WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find files in STATICFILES_DIRS
