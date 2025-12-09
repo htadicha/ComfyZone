@@ -209,6 +209,7 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
     """
     Signal to ensure S3 ACL is set to public-read after ProductImage is saved.
     This is a backup to ensure ACL is set even if storage class fails.
+    Uses a small delay to allow file upload to complete.
     """
     if not getattr(settings, 'USE_AWS', False):
         return
@@ -216,31 +217,33 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
     if not instance.image:
         return
     
-    try:
-        import boto3
-        from botocore.exceptions import ClientError
+    # Import threading for delayed execution
+    import threading
+    import time
+    import boto3
+    from botocore.exceptions import ClientError
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    def set_acl_after_delay():
+        """Set ACL after a short delay to ensure file is uploaded."""
+        # Wait a bit for the file to be fully uploaded
+        time.sleep(1)
         
-        # Get AWS settings
-        bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
-        region_name = getattr(settings, 'AWS_S3_REGION_NAME', '')
-        aws_access_key_id = getattr(settings, 'AWS_ACCESS_KEY_ID', '')
-        aws_secret_access_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', '')
-        
-        if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
-            return
-        
-        # Use the storage class to get the correct S3 key
-        # The storage class knows the exact key format
-        storage = instance.image.storage
-        image_name = instance.image.name
-        
-        # Get the actual S3 key from the storage class
-        # django-storages normalizes the name, so we need to use the storage's method
         try:
-            if hasattr(storage, '_normalize_name'):
-                normalized_name = storage._normalize_name(storage._clean_name(image_name))
-            else:
-                normalized_name = image_name.lstrip('/')
+            # Get AWS settings
+            bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
+            region_name = getattr(settings, 'AWS_S3_REGION_NAME', '')
+            aws_access_key_id = getattr(settings, 'AWS_ACCESS_KEY_ID', '')
+            aws_secret_access_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', '')
+            
+            if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
+                return
+            
+            # Use the storage class to get the correct S3 key
+            storage = instance.image.storage
+            image_name = instance.image.name
             
             # Get location from storage or settings
             if hasattr(storage, 'location') and storage.location:
@@ -248,69 +251,99 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             else:
                 location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
             
-            # Construct S3 key - location + normalized name
-            if normalized_name.startswith(location + '/'):
-                s3_key = normalized_name
-            elif normalized_name.startswith('/'):
-                s3_key = f"{location}{normalized_name}"
-            else:
-                s3_key = f"{location}/{normalized_name}" if location else normalized_name
-        except:
-            # Fallback to simple construction
-            aws_location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
-            if image_name.startswith(aws_location + '/'):
-                s3_key = image_name
-            elif image_name.startswith('/'):
-                s3_key = f"{aws_location}{image_name}"
-            else:
-                s3_key = f"{aws_location}/{image_name}"
-        
-        # Initialize S3 client
-        s3_client = boto3.client(
-            's3',
-            region_name=region_name,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key
-        )
-        
-        # First check if file exists before trying to set ACL
-        try:
-            s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-        except ClientError as e:
-            if e.response['Error']['Code'] == '404':
-                # File doesn't exist yet - this is normal for new uploads
-                # The storage class should have uploaded it, but if it failed, we can't set ACL
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"File not found in S3 when setting ACL: {s3_key}. Upload may have failed.")
-                return
-            else:
-                raise
-        
-        # File exists, now set ACL to public-read
-        try:
-            s3_client.put_object_acl(
-                Bucket=bucket_name,
-                Key=s3_key,
-                ACL='public-read'
-            )
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(f"Signal: Set ACL to public-read for {s3_key}")
-        except ClientError as e:
-            # Log but don't fail - ACL might already be set or there might be permission issues
-            import logging
-            logger = logging.getLogger(__name__)
-            error_code = e.response.get('Error', {}).get('Code', '')
-            if error_code == 'NoSuchKey':
-                logger.warning(f"Signal: File not found in S3: {s3_key}")
-            elif 'BlockPublicAccess' in str(e) or error_code == 'AccessDenied':
-                logger.error(f"Signal: Cannot set ACL for {s3_key}: Block Public Access may be enabled or IAM permissions missing")
-            else:
-                logger.warning(f"Signal: Could not set ACL for {s3_key}: {e}")
+            # Remove 'app/' prefix if present (common issue)
+            if image_name.startswith('app/'):
+                image_name = image_name[4:]  # Remove 'app/'
             
-    except Exception as e:
-        # Don't fail the save if ACL setting fails
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error setting S3 ACL for product image: {e}")
+            # Get the actual S3 key from the storage class
+            # Try to use storage's normalization methods
+            try:
+                if hasattr(storage, '_normalize_name') and hasattr(storage, '_clean_name'):
+                    normalized_name = storage._normalize_name(storage._clean_name(image_name))
+                else:
+                    normalized_name = image_name.lstrip('/')
+                
+                # Construct S3 key - location + normalized name
+                if normalized_name.startswith(location + '/'):
+                    s3_key = normalized_name
+                elif normalized_name.startswith('/'):
+                    s3_key = f"{location}{normalized_name}"
+                else:
+                    s3_key = f"{location}/{normalized_name}" if location else normalized_name
+            except:
+                # Fallback to simple construction
+                if image_name.startswith(location + '/'):
+                    s3_key = image_name
+                elif image_name.startswith('/'):
+                    s3_key = f"{location}{image_name}"
+                else:
+                    s3_key = f"{location}/{image_name}"
+            
+            # Initialize S3 client
+            s3_client = boto3.client(
+                's3',
+                region_name=region_name,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key
+            )
+            
+            # Try multiple key variations in case of path issues
+            possible_keys = [
+                s3_key,
+                image_name,  # Without location
+                f"/{image_name}",  # With leading slash
+                f"{location}{image_name}",  # Location without slash
+                image_name.lstrip('/'),  # Without leading slash
+            ]
+            
+            # Remove duplicates while preserving order
+            seen = set()
+            unique_keys = []
+            for key in possible_keys:
+                if key not in seen:
+                    seen.add(key)
+                    unique_keys.append(key)
+            
+            # Try to find the file and set ACL
+            file_found = False
+            for key in unique_keys:
+                try:
+                    # Check if file exists
+                    s3_client.head_object(Bucket=bucket_name, Key=key)
+                    file_found = True
+                    
+                    # File exists, now set ACL to public-read
+                    try:
+                        s3_client.put_object_acl(
+                            Bucket=bucket_name,
+                            Key=key,
+                            ACL='public-read'
+                        )
+                        logger.info(f"Signal: Set ACL to public-read for {key}")
+                        break  # Success, no need to try other keys
+                    except ClientError as e:
+                        error_code = e.response.get('Error', {}).get('Code', '')
+                        if 'BlockPublicAccess' in str(e) or error_code == 'AccessDenied':
+                            logger.error(f"Signal: Cannot set ACL for {key}: Block Public Access may be enabled or IAM permissions missing")
+                        else:
+                            logger.warning(f"Signal: Could not set ACL for {key}: {e}")
+                    break  # Found file, stop trying other keys
+                except ClientError as e:
+                    if e.response['Error']['Code'] != '404':
+                        # Not a 404, some other error
+                        logger.warning(f"Signal: Error checking file {key}: {e}")
+                    continue
+            
+            if not file_found:
+                logger.warning(f"Signal: File not found in S3 for any of these keys: {unique_keys}. Upload may have failed or path is incorrect.")
+                
+        except Exception as e:
+            # Don't fail the save if ACL setting fails
+            logger.error(f"Error setting S3 ACL for product image: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+    
+    # Run ACL setting in a separate thread with a delay
+    thread = threading.Thread(target=set_acl_after_delay)
+    thread.daemon = True
+    thread.start()
