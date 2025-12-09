@@ -229,31 +229,32 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
         if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
             return
         
-        # Get the S3 key using the storage backend
-        image_name = instance.image.name
+        # Use the storage class to get the correct S3 key
+        # The storage class knows the exact key format
         storage = instance.image.storage
+        image_name = instance.image.name
         
-        # Try to get the actual S3 key from storage
+        # Get the actual S3 key from the storage class
+        # django-storages normalizes the name, so we need to use the storage's method
         try:
-            # Use storage's _normalize_name to get the correct key
-            if hasattr(storage, 'location'):
+            if hasattr(storage, '_normalize_name'):
+                normalized_name = storage._normalize_name(storage._clean_name(image_name))
+            else:
+                normalized_name = image_name.lstrip('/')
+            
+            # Get location from storage or settings
+            if hasattr(storage, 'location') and storage.location:
                 location = storage.location.strip('/') if storage.location else ''
             else:
                 location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
             
-            # Normalize the name
-            if hasattr(storage, '_normalize_name'):
-                normalized = storage._normalize_name(storage._clean_name(image_name))
+            # Construct S3 key - location + normalized name
+            if normalized_name.startswith(location + '/'):
+                s3_key = normalized_name
+            elif normalized_name.startswith('/'):
+                s3_key = f"{location}{normalized_name}"
             else:
-                normalized = image_name.lstrip('/')
-            
-            # Construct S3 key
-            if normalized.startswith(location + '/'):
-                s3_key = normalized
-            elif normalized.startswith('/'):
-                s3_key = f"{location}{normalized}"
-            else:
-                s3_key = f"{location}/{normalized}" if location else normalized
+                s3_key = f"{location}/{normalized_name}" if location else normalized_name
         except:
             # Fallback to simple construction
             aws_location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
@@ -272,7 +273,21 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             aws_secret_access_key=aws_secret_access_key
         )
         
-        # Set ACL to public-read
+        # First check if file exists before trying to set ACL
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                # File doesn't exist yet - this is normal for new uploads
+                # The storage class should have uploaded it, but if it failed, we can't set ACL
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"File not found in S3 when setting ACL: {s3_key}. Upload may have failed.")
+                return
+            else:
+                raise
+        
+        # File exists, now set ACL to public-read
         try:
             s3_client.put_object_acl(
                 Bucket=bucket_name,
@@ -283,14 +298,14 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             logger = logging.getLogger(__name__)
             logger.info(f"Signal: Set ACL to public-read for {s3_key}")
         except ClientError as e:
-            error_code = e.response.get('Error', {}).get('Code', '')
-            # Log but don't fail - file might not exist yet or ACL might already be set
+            # Log but don't fail - ACL might already be set or there might be permission issues
             import logging
             logger = logging.getLogger(__name__)
+            error_code = e.response.get('Error', {}).get('Code', '')
             if error_code == 'NoSuchKey':
                 logger.warning(f"Signal: File not found in S3: {s3_key}")
-            elif 'BlockPublicAccess' in str(e):
-                logger.error(f"Signal: Block Public Access is enabled on bucket!")
+            elif 'BlockPublicAccess' in str(e) or error_code == 'AccessDenied':
+                logger.error(f"Signal: Cannot set ACL for {s3_key}: Block Public Access may be enabled or IAM permissions missing")
             else:
                 logger.warning(f"Signal: Could not set ACL for {s3_key}: {e}")
             
