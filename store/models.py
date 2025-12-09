@@ -326,17 +326,38 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
                 if key not in seen:
                     seen.add(key)
                     unique_keys.append(key)
+
+            # Debug logging to trace path resolution issues
+            logger.error(
+                "Signal: S3 key resolution debug",
+                extra={
+                    "image_name_original": instance.image.name,
+                    "image_name_cleaned": image_name,
+                    "normalized_name": normalized_name,
+                    "location": location,
+                    "constructed_s3_key": s3_key,
+                    "possible_keys": possible_keys,
+                    "unique_keys": unique_keys,
+                    "bucket": bucket_name,
+                },
+            )
             
             # Try to find the file and set ACL
             file_found = False
             for key in unique_keys:
                 try:
                     # Check if file exists
+                    logger.info(f"Signal: head_object check -> bucket={bucket_name}, key={key}")
                     s3_client.head_object(Bucket=bucket_name, Key=key)
                     file_found = True
+                    logger.error(
+                        "Signal: File found; attempting ACL",
+                        extra={"key": key, "bucket": bucket_name},
+                    )
                     
                     # File exists, now set ACL to public-read
                     try:
+                        logger.info(f"Signal: put_object_acl public-read -> bucket={bucket_name}, key={key}")
                         s3_client.put_object_acl(
                             Bucket=bucket_name,
                             Key=key,

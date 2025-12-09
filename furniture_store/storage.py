@@ -72,6 +72,15 @@ class MediaStorage(S3Boto3Storage):
         
         # Verify file exists in S3 and set ACL
         bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
+        logger.error(
+            "[STORAGE] ACL verify start",
+            extra={
+                "original_name": name,
+                "saved_name": saved_name,
+                "bucket": bucket_name,
+                "location": location,
+            },
+        )
         
         if not bucket_name:
             logger.warning("AWS_STORAGE_BUCKET_NAME not set, skipping ACL verification")
@@ -94,7 +103,17 @@ class MediaStorage(S3Boto3Storage):
                 seen.add(key)
                 unique_keys.append(key)
         
-        logger.info(f"Checking for file with keys: {unique_keys}")
+        logger.error(
+            "[STORAGE] Checking uploaded file in S3",
+            extra={
+                "bucket": bucket_name,
+                "location": location,
+                "original_name": name,
+                "saved_name": saved_name,
+                "possible_keys": possible_keys,
+                "unique_keys": unique_keys,
+            },
+        )
         
         # Initialize S3 client
         try:
@@ -112,6 +131,7 @@ class MediaStorage(S3Boto3Storage):
             for key in unique_keys:
                 try:
                     # Check if file exists
+                    logger.info(f"[STORAGE] head_object check -> bucket={bucket_name}, key={key}")
                     s3_client.head_object(Bucket=bucket_name, Key=key)
                     file_found = True
                     actual_key = key
@@ -133,6 +153,7 @@ class MediaStorage(S3Boto3Storage):
             
             # File exists, now set ACL to public-read (backup in case _get_write_parameters didn't work)
             try:
+                logger.info(f"[STORAGE] put_object_acl public-read -> bucket={bucket_name}, key={actual_key}")
                 s3_client.put_object_acl(
                     Bucket=bucket_name,
                     Key=actual_key,

@@ -362,3 +362,28 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+
+# -------------------------------------------------------------------
+# Logging
+# -------------------------------------------------------------------
+# Emit INFO-level logs to console for our S3 storage and signals to
+# observe image_name and constructed S3 keys at runtime.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "furniture_store.storage": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "store.models": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}
