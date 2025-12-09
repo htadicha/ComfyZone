@@ -231,11 +231,13 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
         
         # Get the S3 key
         image_name = instance.image.name
-        aws_location = getattr(settings, 'AWS_LOCATION', 'media')
+        aws_location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
         
-        # Construct the S3 key
-        if image_name.startswith(aws_location):
+        # Construct the S3 key - handle different formats
+        if image_name.startswith(aws_location + '/'):
             s3_key = image_name
+        elif image_name.startswith('/'):
+            s3_key = f"{aws_location}{image_name}"
         else:
             s3_key = f"{aws_location}/{image_name}"
         
