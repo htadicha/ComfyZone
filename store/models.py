@@ -1,8 +1,11 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from django.conf import settings
 
 
 class Category(models.Model):
@@ -160,6 +163,7 @@ class ProductImage(models.Model):
                 pk=self.pk
             ).update(is_primary=False)
         super().save(*args, **kwargs)
+        # ACL will be set by post_save signal if using AWS
 
 
 class ProductVariation(models.Model):
@@ -198,3 +202,66 @@ class ProductVariation(models.Model):
     def get_final_price(self):
         """Get final price including variation adjustment."""
         return self.product.price + self.price_adjustment
+
+
+@receiver(post_save, sender=ProductImage)
+def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
+    """
+    Signal to ensure S3 ACL is set to public-read after ProductImage is saved.
+    This is a backup to ensure ACL is set even if storage class fails.
+    """
+    if not getattr(settings, 'USE_AWS', False):
+        return
+    
+    if not instance.image:
+        return
+    
+    try:
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        # Get AWS settings
+        bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
+        region_name = getattr(settings, 'AWS_S3_REGION_NAME', '')
+        aws_access_key_id = getattr(settings, 'AWS_ACCESS_KEY_ID', '')
+        aws_secret_access_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', '')
+        
+        if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
+            return
+        
+        # Get the S3 key
+        image_name = instance.image.name
+        aws_location = getattr(settings, 'AWS_LOCATION', 'media')
+        
+        # Construct the S3 key
+        if image_name.startswith(aws_location):
+            s3_key = image_name
+        else:
+            s3_key = f"{aws_location}/{image_name}"
+        
+        # Initialize S3 client
+        s3_client = boto3.client(
+            's3',
+            region_name=region_name,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key
+        )
+        
+        # Set ACL to public-read
+        try:
+            s3_client.put_object_acl(
+                Bucket=bucket_name,
+                Key=s3_key,
+                ACL='public-read'
+            )
+        except ClientError as e:
+            # Log but don't fail - file might not exist yet or ACL might already be set
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Could not set ACL for {s3_key}: {e}")
+            
+    except Exception as e:
+        # Don't fail the save if ACL setting fails
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error setting S3 ACL for product image: {e}")
