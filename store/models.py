@@ -254,7 +254,11 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             else:
                 location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
             
-            # Remove 'app/' prefix if present (common Heroku issue)
+            # Remove 'app/' prefix from location if present (common Heroku issue)
+            if location.startswith('app/'):
+                location = location[4:]
+            
+            # Remove 'app/' prefix if present in image name (common Heroku issue)
             # Also handle 'app/media/' prefix
             if image_name.startswith('app/media/'):
                 image_name = image_name[10:]  # Remove 'app/media/'
@@ -307,6 +311,8 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
                 image_name,  # Original name without location
                 f"{location}/{clean_image_name}",  # Location + cleaned name
                 f"{location}/{image_name}",  # Location + original name
+                f"media/{clean_image_name}",  # Explicit media/ check
+                f"media/{image_name}",  # Explicit media/ check
                 f"/{clean_image_name}",  # With leading slash
                 f"/{image_name}",  # Original with leading slash
                 f"{location}{clean_image_name}",  # Location without slash
