@@ -239,11 +239,14 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             aws_secret_access_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', '')
             
             if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
+                logger.warning("Signal: AWS settings not complete, skipping ACL setting")
                 return
             
             # Use the storage class to get the correct S3 key
             storage = instance.image.storage
             image_name = instance.image.name
+            
+            logger.info(f"Signal: Processing image - name: {image_name}, storage: {storage.__class__.__name__}")
             
             # Get location from storage or settings
             if hasattr(storage, 'location') and storage.location:
@@ -251,8 +254,11 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             else:
                 location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
             
-            # Remove 'app/' prefix if present (common issue)
-            if image_name.startswith('app/'):
+            # Remove 'app/' prefix if present (common Heroku issue)
+            # Also handle 'app/media/' prefix
+            if image_name.startswith('app/media/'):
+                image_name = image_name[10:]  # Remove 'app/media/'
+            elif image_name.startswith('app/'):
                 image_name = image_name[4:]  # Remove 'app/'
             
             # Get the actual S3 key from the storage class
@@ -288,12 +294,23 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
             )
             
             # Try multiple key variations in case of path issues
+            # Remove 'app/media/' if still present
+            clean_image_name = image_name
+            if clean_image_name.startswith('app/media/'):
+                clean_image_name = clean_image_name[10:]
+            elif clean_image_name.startswith('app/'):
+                clean_image_name = clean_image_name[4:]
+            
             possible_keys = [
                 s3_key,
-                image_name,  # Without location
-                f"/{image_name}",  # With leading slash
-                f"{location}{image_name}",  # Location without slash
-                image_name.lstrip('/'),  # Without leading slash
+                clean_image_name,  # Cleaned name without location
+                image_name,  # Original name without location
+                f"{location}/{clean_image_name}",  # Location + cleaned name
+                f"{location}/{image_name}",  # Location + original name
+                f"/{clean_image_name}",  # With leading slash
+                f"/{image_name}",  # Original with leading slash
+                f"{location}{clean_image_name}",  # Location without slash
+                f"{location}{image_name}",  # Original location without slash
             ]
             
             # Remove duplicates while preserving order
