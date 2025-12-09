@@ -21,6 +21,9 @@ class MediaStorage(S3Boto3Storage):
     file_overwrite = False
     
     def __init__(self, *args, **kwargs):
+        # Set location before calling super() so it's available
+        if 'location' not in kwargs:
+            kwargs['location'] = getattr(settings, 'AWS_LOCATION', 'media')
         super().__init__(*args, **kwargs)
         # Ensure location is set from settings
         if not self.location:
@@ -43,25 +46,30 @@ class MediaStorage(S3Boto3Storage):
         try:
             # Call parent _save to upload the file (this should use ACL from _get_write_parameters)
             name = super()._save(name, content)
-            logger.info(f"File uploaded successfully: {name}")
+            logger.info(f"File uploaded successfully via parent _save: {name}")
         except Exception as e:
             logger.error(f"Failed to upload file {name}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             raise
         
-        # Get the full S3 key for explicit ACL setting (backup)
-        # The name returned might or might not include location prefix
-        aws_location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
+        # Verify file exists in S3 before trying to set ACL
+        # Get the actual S3 key that was used
+        bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
         
-        # Construct S3 key - django-storages stores name without location prefix
-        # but we need the full key with location
-        if name.startswith(aws_location + '/'):
+        # The name returned from super()._save() is the relative path
+        # We need to construct the full S3 key with location
+        location = self.location if hasattr(self, 'location') and self.location else getattr(settings, 'AWS_LOCATION', 'media').strip('/')
+        
+        # Construct S3 key
+        if name.startswith(location + '/'):
             s3_key = name
         elif name.startswith('/'):
-            s3_key = f"{aws_location}{name}"
+            s3_key = f"{location}{name}"
         else:
-            s3_key = f"{aws_location}/{name}"
+            s3_key = f"{location}/{name}"
         
-        # Explicitly set ACL to public-read using boto3 (backup mechanism)
+        # Verify file exists before setting ACL
         try:
             s3_client = boto3.client(
                 's3',
@@ -70,9 +78,32 @@ class MediaStorage(S3Boto3Storage):
                 aws_secret_access_key=getattr(settings, 'AWS_SECRET_ACCESS_KEY', '')
             )
             
-            bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
+            # Check if file exists
+            try:
+                s3_client.head_object(Bucket=bucket_name, Key=s3_key)
+                logger.info(f"Verified file exists in S3: {s3_key}")
+            except ClientError as e:
+                if e.response['Error']['Code'] == '404':
+                    logger.error(f"File was not uploaded to S3! Key: {s3_key}")
+                    # Try alternative key formats
+                    alt_keys = [
+                        name,  # Without location
+                        f"/{name}",  # With leading slash
+                        f"{location}{name}",  # Location without slash
+                    ]
+                    for alt_key in alt_keys:
+                        try:
+                            s3_client.head_object(Bucket=bucket_name, Key=alt_key)
+                            logger.warning(f"File found at alternative key: {alt_key} (expected: {s3_key})")
+                            s3_key = alt_key
+                            break
+                        except ClientError:
+                            continue
+                    else:
+                        logger.error(f"File not found at any expected location. Upload may have failed.")
+                        return name  # Return anyway, signal will try later
             
-            # Set ACL to public-read
+            # File exists, now set ACL to public-read
             s3_client.put_object_acl(
                 Bucket=bucket_name,
                 Key=s3_key,
@@ -87,7 +118,6 @@ class MediaStorage(S3Boto3Storage):
                 logger.warning(f"Failed to set ACL to public-read for {s3_key}: {e}")
         except Exception as e:
             # Log error but don't fail the upload
-            # The post_save signal will also try to set ACL
             logger.warning(f"Failed to set ACL to public-read for {s3_key}: {e}")
         
         return name
