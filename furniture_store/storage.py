@@ -40,8 +40,13 @@ class MediaStorage(S3Boto3Storage):
         Override _save to ensure ACL is set to public-read after upload.
         Uses parent's _save but then explicitly sets ACL as backup.
         """
-        # Call parent _save to upload the file (this should use ACL from _get_write_parameters)
-        name = super()._save(name, content)
+        try:
+            # Call parent _save to upload the file (this should use ACL from _get_write_parameters)
+            name = super()._save(name, content)
+            logger.info(f"File uploaded successfully: {name}")
+        except Exception as e:
+            logger.error(f"Failed to upload file {name}: {e}")
+            raise
         
         # Get the full S3 key for explicit ACL setting (backup)
         # The name returned might or might not include location prefix
@@ -74,6 +79,12 @@ class MediaStorage(S3Boto3Storage):
                 ACL='public-read'
             )
             logger.info(f"Set ACL to public-read for {s3_key}")
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
+            if 'BlockPublicAccess' in str(e) or error_code == 'AccessDenied':
+                logger.error(f"Cannot set ACL for {s3_key}: Block Public Access may be enabled or IAM permissions missing")
+            else:
+                logger.warning(f"Failed to set ACL to public-read for {s3_key}: {e}")
         except Exception as e:
             # Log error but don't fail the upload
             # The post_save signal will also try to set ACL
