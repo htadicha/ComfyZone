@@ -135,18 +135,19 @@
         <h2>Related Products</h2>
         <div class="row">
           {% for related in related_products %}
-          <div class="col-12 col-md-4 col-lg-3 mb-5">
-            <a class="product-item" href="{% url 'store:product_detail' slug=related.slug %}">
-              {% if related.get_primary_image %}
-                <img src="{{ related.get_primary_image.image.url }}" class="img-fluid product-thumbnail" alt="{{ related.name }}">
-              {% else %}
-                <img src="{% static 'images/product-1.png' %}" class="img-fluid product-thumbnail" alt="{{ related.name }}">
-              {% endif %}
-              <h3 class="product-title">{{ related.name }}</h3>
-              <strong class="product-price">${{ related.price }}</strong>
-              <span class="icon-cross">
-                <img src="{% static 'images/cross.svg' %}" class="img-fluid">
-              </span>
+          <div class="col-12 col-md-6 col-lg-3 mb-4">
+            <a class="related-product-item" href="{% url 'store:product_detail' slug=related.slug %}">
+              <div class="related-product-content">
+                {% if related.get_primary_image %}
+                  <img src="{{ related.get_primary_image.image.url }}" class="related-product-image" alt="{{ related.name }}">
+                {% else %}
+                  <img src="{% static 'images/product-1.png' %}" class="related-product-image" alt="{{ related.name }}">
+                {% endif %}
+                <div class="related-product-info">
+                  <h3 class="related-product-title">{{ related.name }}</h3>
+                  <strong class="related-product-price">${{ related.price }}</strong>
+                </div>
+              </div>
             </a>
           </div>
           {% endfor %}
