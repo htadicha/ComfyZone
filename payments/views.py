@@ -18,11 +18,10 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def checkout_view(request):
     """Checkout page view."""
-    # Get cart items
     from cart.utils import get_cart, get_session_cart
     from cart.models import CartItem
     from store.models import Product
-    
+
     if request.user.is_authenticated:
         cart = get_cart(request)
         if not cart or not cart.items.exists():
@@ -49,13 +48,12 @@ def checkout_view(request):
                 product = Product.objects.get(id=item_data["product_id"])
                 quantity = item_data["quantity"]
                 price = product.price
-                
-                # Add variation adjustments
+
                 if item_data.get("variation_ids"):
                     from store.models import ProductVariation
                     variations = ProductVariation.objects.filter(id__in=item_data["variation_ids"])
                     price += sum(Decimal(str(v.price_adjustment)) for v in variations)
-                
+
                 items.append({
                     "product": product,
                     "quantity": quantity,
@@ -66,7 +64,6 @@ def checkout_view(request):
             except Product.DoesNotExist:
                 continue
     
-    # Get user addresses if authenticated
     addresses = []
     if request.user.is_authenticated:
         try:
@@ -74,11 +71,11 @@ def checkout_view(request):
             addresses = Address.objects.filter(user=request.user)
         except:
             pass
-    
-    # Calculate totals
+
     subtotal = total
-    tax = subtotal * Decimal('0.1')  # 10% tax
-    shipping_cost = Decimal('0')  # Free shipping
+    tax_rate = Decimal('0.1')
+    tax = subtotal * tax_rate
+    shipping_cost = Decimal('0')
     final_total = subtotal + tax + shipping_cost
     
     context = {
@@ -98,18 +95,15 @@ def checkout_view(request):
 def create_checkout_session(request):
     """Create Stripe checkout session."""
     try:
-        # Create order first (this function needs to be imported or defined)
         from orders.views import create_order_from_cart
         shipping_address_id = request.POST.get("shipping_address_id")
         order = create_order_from_cart(request, shipping_address_id=shipping_address_id)
-        
+
         if not order:
             return JsonResponse({"error": "Failed to create order"}, status=400)
-        
-        # Create line items for Stripe
+
         line_items = []
         for item in order.items.all():
-            # Convert Decimal to int (cents) safely
             price_cents = int(float(item.price) * 100)
             line_items.append({
                 "price_data": {
@@ -121,8 +115,7 @@ def create_checkout_session(request):
                 },
                 "quantity": item.quantity,
             })
-        
-        # Add tax and shipping as line items
+
         if order.tax > 0:
             tax_cents = int(float(order.tax) * 100)
             line_items.append({
@@ -148,8 +141,7 @@ def create_checkout_session(request):
                 },
                 "quantity": 1,
             })
-        
-        # Create Stripe checkout session
+
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
             line_items=line_items,
@@ -161,8 +153,7 @@ def create_checkout_session(request):
                 "order_number": order.order_number,
             },
         )
-        
-        # Create payment record
+
         Payment.objects.create(
             order=order,
             payment_method="stripe",
@@ -171,9 +162,9 @@ def create_checkout_session(request):
             amount=order.total,
             status="pending",
         )
-        
+
         return JsonResponse({"sessionId": checkout_session.id})
-    
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -222,7 +213,6 @@ def stripe_webhook(request):
     except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
     
-    # Handle the event
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         handle_checkout_session_completed(session)

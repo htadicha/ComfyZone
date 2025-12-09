@@ -31,7 +31,6 @@ if not getattr(settings, 'USE_AWS', False):
     print("   This script only works when USE_AWS=True")
     sys.exit(1)
 
-# Get AWS settings
 bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
 region_name = getattr(settings, 'AWS_S3_REGION_NAME', '')
 aws_access_key_id = getattr(settings, 'AWS_ACCESS_KEY_ID', '')
@@ -41,7 +40,6 @@ if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key])
     print("❌ Missing required AWS configuration!")
     sys.exit(1)
 
-# Initialize S3 client
 s3_client = boto3.client(
     's3',
     region_name=region_name,
@@ -49,7 +47,6 @@ s3_client = boto3.client(
     aws_secret_access_key=aws_secret_access_key
 )
 
-# Get all product images
 images = ProductImage.objects.all()
 
 if not images:
@@ -63,13 +60,9 @@ fixed_count = 0
 error_count = 0
 
 for img in images:
-    # Get the S3 key (path) for this image
     image_name = img.image.name
     aws_location = getattr(settings, 'AWS_LOCATION', 'media')
     
-    # Construct the S3 key
-    # The image.name already includes the upload_to path (photos/products/)
-    # and AWS_LOCATION is the prefix
     s3_key = f"{aws_location}/{image_name}" if not image_name.startswith(aws_location) else image_name
     
     print(f"Product: {img.product.name}")
@@ -77,7 +70,6 @@ for img in images:
     print(f"  URL: {img.image.url}")
     
     try:
-        # Check if file exists
         try:
             s3_client.head_object(Bucket=bucket_name, Key=s3_key)
         except ClientError as e:
@@ -89,7 +81,6 @@ for img in images:
             else:
                 raise
         
-        # Set ACL to public-read
         s3_client.put_object_acl(
             Bucket=bucket_name,
             Key=s3_key,

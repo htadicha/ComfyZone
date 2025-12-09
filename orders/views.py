@@ -27,7 +27,6 @@ def order_detail(request, order_number):
 def create_order_from_cart(request, shipping_address_id=None, billing_address_id=None):
     """Create order from cart items."""
     with transaction.atomic():
-        # Get cart items
         if request.user.is_authenticated:
             cart = get_cart(request)
             if not cart or not cart.items.exists():
@@ -35,7 +34,6 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
             
             cart_items = cart.items.all()
         else:
-            # Handle session cart
             session_cart = get_session_cart(request)
             if not session_cart:
                 return None
@@ -51,8 +49,7 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
                     })
                 except Product.DoesNotExist:
                     continue
-        
-        # Get or create addresses
+
         if request.user.is_authenticated:
             if shipping_address_id:
                 shipping_address = Address.objects.get(id=shipping_address_id, user=request.user)
@@ -67,13 +64,12 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
         else:
             shipping_address = None
             user = None
-            # Get from form data
+
             email = request.POST.get("email")
             first_name = request.POST.get("first_name")
             last_name = request.POST.get("last_name")
             phone = request.POST.get("phone")
-        
-        # Calculate totals
+
         subtotal = Decimal("0")
         if request.user.is_authenticated:
             for item in cart_items:
@@ -81,11 +77,11 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
         else:
             subtotal = Decimal(get_session_cart_total(request))
         
-        tax = subtotal * Decimal("0.1")  # 10% tax (adjust as needed)
-        shipping_cost = Decimal("0")  # Free shipping (adjust as needed)
+        tax_rate = Decimal("0.1")
+        tax = subtotal * tax_rate
+        shipping_cost = Decimal("0")
         total = subtotal + tax + shipping_cost
-        
-        # Create order
+
         order = Order.objects.create(
             user=user,
             email=email,
@@ -104,8 +100,7 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
             total=total,
             notes=request.POST.get("notes", ""),
         )
-        
-        # Create order items
+
         if request.user.is_authenticated:
             for cart_item in cart_items:
                 OrderItem.objects.create(
@@ -120,8 +115,7 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
                 product = item_data["product"]
                 quantity = item_data["quantity"]
                 price = product.price
-                
-                # Add variation adjustments
+
                 if item_data.get("variations"):
                     from store.models import ProductVariation
                     variations = ProductVariation.objects.filter(id__in=item_data["variations"])
@@ -134,15 +128,13 @@ def create_order_from_cart(request, shipping_address_id=None, billing_address_id
                     price=price,
                     subtotal=price * quantity,
                 )
-        
-        # Clear cart
+
         if request.user.is_authenticated:
             cart.clear()
         else:
             request.session["cart"] = {}
             request.session.modified = True
-        
-        # Send confirmation email
+
         order.send_confirmation_email()
-        
+
         return order

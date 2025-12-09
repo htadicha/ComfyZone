@@ -12,7 +12,6 @@ import os
 import sys
 import django
 
-# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'furniture_store.settings')
 django.setup()
 
@@ -26,7 +25,6 @@ def check_configuration():
     print("=" * 60)
     print()
     
-    # Check if AWS is enabled
     use_aws = getattr(settings, 'USE_AWS', False)
     print(f"✓ USE_AWS: {use_aws}")
     
@@ -37,7 +35,6 @@ def check_configuration():
     print("\n📋 Configuration Values:")
     print("-" * 60)
     
-    # Required settings (must have values)
     required_settings = {
         'AWS_STORAGE_BUCKET_NAME': getattr(settings, 'AWS_STORAGE_BUCKET_NAME', ''),
         'AWS_S3_REGION_NAME': getattr(settings, 'AWS_S3_REGION_NAME', ''),
@@ -45,7 +42,6 @@ def check_configuration():
         'AWS_SECRET_ACCESS_KEY': getattr(settings, 'AWS_SECRET_ACCESS_KEY', ''),
     }
     
-    # Optional settings (have defaults or can be None)
     optional_settings = {
         'AWS_LOCATION': getattr(settings, 'AWS_LOCATION', 'media'),
         'AWS_DEFAULT_ACL': getattr(settings, 'AWS_DEFAULT_ACL', None),
@@ -54,10 +50,8 @@ def check_configuration():
     
     missing = []
     
-    # Check required settings
     for key, value in required_settings.items():
         if key in ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']:
-            # Mask sensitive values
             display_value = value[:4] + '****' if value else 'NOT SET'
         else:
             display_value = value if value else 'NOT SET'
@@ -65,11 +59,9 @@ def check_configuration():
         status = "✓" if value else "✗"
         print(f"{status} {key}: {display_value}")
         
-        # Add to missing if empty (check for empty string, None, or whitespace)
         if not value or (isinstance(value, str) and not value.strip()):
             missing.append(key)
     
-    # Display optional settings
     for key, value in optional_settings.items():
         if key == 'AWS_DEFAULT_ACL':
             display_value = str(value) if value is not None else 'None'
@@ -85,7 +77,6 @@ def check_configuration():
     print(f"  AWS_S3_FILE_OVERWRITE: {getattr(settings, 'AWS_S3_FILE_OVERWRITE', False)}")
     print(f"  AWS_QUERYSTRING_AUTH: {getattr(settings, 'AWS_QUERYSTRING_AUTH', False)}")
     
-    # Check ACL setting
     acl = getattr(settings, 'AWS_DEFAULT_ACL', None)
     print()
     print("🔐 ACL Configuration:")
@@ -109,7 +100,6 @@ def check_configuration():
         print("  Please set all required configuration values before testing S3 connection.")
         return False
     
-    # Validate MEDIA_URL before testing connection
     media_url = optional_settings.get('MEDIA_URL', '')
     media_url_valid = False
     
@@ -133,7 +123,6 @@ def check_configuration():
         print(f"  ⚠️  MEDIA_URL: {media_url}")
         print("  → Unexpected MEDIA_URL format")
     
-    # If AWS is enabled but MEDIA_URL is not pointing to S3, fail early
     if not media_url_valid:
         print()
         print("❌ MEDIA_URL Configuration Issue:")
@@ -147,13 +136,11 @@ def check_configuration():
         print("    3. Check that Django settings are loading AWS configuration correctly")
         return False
     
-    # Test S3 connection
     print()
     print("🔌 Testing S3 Connection:")
     print("-" * 60)
     try:
         storage = S3Boto3Storage()
-        # Try to list bucket contents (this tests credentials and permissions)
         storage.listdir('')
         print("  ✓ S3 connection successful!")
         print("  ✓ Credentials are valid")
@@ -173,7 +160,6 @@ def check_configuration():
     print("✅ Configuration Check Complete!")
     print("=" * 60)
     
-    # Final recommendations
     if acl is None:
         print()
         print("💡 Recommendation:")

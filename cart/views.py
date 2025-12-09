@@ -72,7 +72,7 @@ def update_cart_item(request, item_id):
         quantity = int(quantity_str)
     except (ValueError, TypeError):
         quantity = 1
-    
+
     if request.user.is_authenticated:
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
         old_quantity = cart_item.quantity
@@ -84,7 +84,6 @@ def update_cart_item(request, item_id):
             cart_item.delete()
             messages.success(request, "Item removed from cart!")
     else:
-        # Handle session cart update
         product_id = request.POST.get("product_id")
         variation_ids = request.POST.getlist("variations")
         if variation_ids:
@@ -111,7 +110,6 @@ def remove_from_cart(request, item_id):
     else:
         product_id = request.POST.get("product_id")
         if product_id:
-            # For session cart, we need the item_key
             item_key = request.POST.get("item_key")
             if item_key:
                 session_cart = get_session_cart(request)
@@ -164,14 +162,13 @@ def view_cart(request):
                 product = Product.objects.get(id=item_data["product_id"])
                 quantity = item_data["quantity"]
                 variation_ids = item_data.get("variation_ids", [])
-                
+
                 variations = ProductVariation.objects.filter(id__in=variation_ids) if variation_ids else []
-                
-                # Calculate price with variations
+
                 price = product.price
                 if variations:
                     price += sum(v.price_adjustment for v in variations)
-                
+
                 items.append({
                     "id": 0,
                     "product": product,

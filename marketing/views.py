@@ -111,6 +111,7 @@ def lead_list_view(request):
 
 
 def _send_confirmation_email(request, subscriber: NewsletterSubscriber):
+    """Send confirmation and unsubscribe links to the subscriber."""
     confirm_url = request.build_absolute_uri(
         reverse("marketing:confirm_subscription", args=[subscriber.confirmation_token])
     )

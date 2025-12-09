@@ -19,7 +19,6 @@ print("S3 Image Access Diagnostic Tool")
 print("=" * 70)
 print()
 
-# Check 1: AWS Configuration
 print("1️⃣  AWS Configuration Check")
 print("-" * 70)
 use_aws = getattr(settings, 'USE_AWS', False)
@@ -58,7 +57,6 @@ if 'MediaStorage' not in default_file_storage:
 
 print()
 
-# Check 2: S3 Connection
 print("2️⃣  S3 Connection Test")
 print("-" * 70)
 try:
@@ -69,7 +67,6 @@ try:
         aws_secret_access_key=aws_secret_access_key
     )
     
-    # Test connection by listing bucket
     s3_client.head_bucket(Bucket=bucket_name)
     print("   ✅ S3 connection successful")
     print("   ✅ Bucket exists and is accessible")
@@ -88,7 +85,6 @@ except Exception as e:
 
 print()
 
-# Check 3: Product Images in Database
 print("3️⃣  Product Images in Database")
 print("-" * 70)
 images = ProductImage.objects.all()[:5]
@@ -104,7 +100,6 @@ else:
         print(f"      Image name: {img.image.name}")
         print(f"      Image URL: {img.image.url}")
         
-        # Construct S3 key
         if img.image.name.startswith(aws_location):
             s3_key = img.image.name
         else:
@@ -112,12 +107,10 @@ else:
         
         print(f"      S3 Key: {s3_key}")
         
-        # Check if file exists
         try:
             s3_client.head_object(Bucket=bucket_name, Key=s3_key)
             print(f"      ✅ File exists in S3")
             
-            # Check ACL
             try:
                 acl_response = s3_client.get_object_acl(Bucket=bucket_name, Key=s3_key)
                 grants = acl_response.get('Grants', [])
@@ -140,9 +133,7 @@ else:
             except ClientError as e:
                 print(f"      ⚠️  Could not check ACL: {e}")
             
-            # Try to access the file
             try:
-                # Generate a presigned URL (this tests if we can access it)
                 url = s3_client.generate_presigned_url(
                     'get_object',
                     Params={'Bucket': bucket_name, 'Key': s3_key},
@@ -163,7 +154,6 @@ else:
 
 print()
 
-# Check 4: Bucket Public Access Block Settings
 print("4️⃣  Bucket Public Access Settings (Manual Check Required)")
 print("-" * 70)
 print("   ⚠️  This requires manual check in AWS Console")
@@ -184,7 +174,6 @@ print("   If any are checked, UNCHECK them and save.")
 print("   ⚠️  AWS will warn you - this is expected for public product images!")
 print()
 
-# Check 5: Storage Class
 print("5️⃣  Storage Class Check")
 print("-" * 70)
 try:
@@ -205,14 +194,12 @@ except Exception as e:
 
 print()
 
-# Check 6: Signal Registration
 print("6️⃣  Signal Registration Check")
 print("-" * 70)
 try:
     from django.db.models.signals import post_save
     from store.models import ProductImage
     
-    # Check if signal is registered
     receivers = post_save._live_receivers(ProductImage)
     signal_found = False
     for receiver in receivers:
@@ -231,7 +218,6 @@ except Exception as e:
 
 print()
 
-# Summary
 print("=" * 70)
 print("📋 SUMMARY & RECOMMENDATIONS")
 print("=" * 70)

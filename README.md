@@ -55,88 +55,55 @@ All configuration is sourced from environment variables (via `python-decouple`),
 
 ## Wireframes & Visual References
 
-UI mockups are derived directly from the Django templates under `templates/store/` and the shared assets inside `static/images/`. These detailed wireframes were used to align the design and development of the site:
+Fresh PNG wireframes for every template-backed page live in `media/wireframes/`. Use them as layout guides when implementing or QA-ing templates.
 
-### Home / Landing Page
+### Storefront
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ Hero: headline + CTA                                                         │
-│ ┌─────────────┐ ┌──────────────────────────────────────────────────────────┐ │
-│ │ Value copy  │ │ Lifestyle image                                         │ │
-│ │ • H1        │ │ • Lazy-loaded to keep LCP < 2.5s                        │ │
-│ │ • Paragraph │ │                                                          │ │
-│ │ • CTA pair  │ │                                                          │ │
-│ └─────────────┘ └──────────────────────────────────────────────────────────┘ │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ Featured products (3-up cards)                                               │
-│ [Card]  [Card]  [Card]                                                       │
-│ • Image w/ alt text                                                          │
-│ • Title                                                                      │
-│ • Price                                                                      │
-│ • Quick action icon                                                          │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ Why Choose Us                                                                │
-│ • 4 feature tiles (Shipping, Shopping ease, Support, Returns)                │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ Newsletter CTA (footer hero)                                                 │
-│ • Email + name inputs                                                        │
-│ • Clear consent copy                                                         │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+- [Home / Landing](media/wireframes/01-home.png)
+- [Shop / Catalog](media/wireframes/02-shop.png)
+- [Category Listing](media/wireframes/03-category.png)
+- [Product Detail](media/wireframes/04-product-detail.png)
+- [About](media/wireframes/05-about.png)
+- [Services](media/wireframes/06-services.png)
+- [Contact](media/wireframes/07-contact.png)
+- [Terms & Conditions](media/wireframes/08-terms.png)
+- [Privacy Notice](media/wireframes/09-privacy.png)
+- [404 Page](media/wireframes/30-404.png)
 
-**Notes:**
-- Navigation exposes Shop/About/Services/Contact plus account/cart icons.
-- Hero CTA buttons route to `shop/` and `about/`.
-- Featured products link to `/product/<slug>/`.
-- Newsletter form posts to `marketing:subscribe` and feeds Merit LO5 evidence.
+### Cart, Checkout, and Orders
 
-### Product Detail Page
+- [Cart](media/wireframes/10-cart.png)
+- [Checkout](media/wireframes/11-checkout.png)
+- [Payment Success](media/wireframes/12-payment-success.png)
+- [Payment Cancelled](media/wireframes/13-payment-cancel.png)
+- [Order History](media/wireframes/14-order-history.png)
+- [Order Detail](media/wireframes/15-order-detail.png)
 
-```
-┌─────────────────────────────┬──────────────────────────────────────────────┐
-│ Image carousel (60%)        │ Product info (40%)                           │
-│ • Primary image             │ • Product title + price                      │
-│ • Thumbnail rail            │ • Rating summary + review count              │
-│                             │ • Short description                          │
-│                             │ • Stock status + quantity selector           │
-│                             │ • Variation selects (color/size)             │
-│                             │ • Add to cart button                         │
-├─────────────────────────────┴──────────────────────────────────────────────┤
-│ Reviews block                                                               
-│ • List top 5 approved reviews                                               
-│ • CTA: "Manage your review" (auth only)                                     
-│ • Guests see login prompt                                                   
-├──────────────────────────────────────────────────────────────────────────────┤
-│ Related products (4-up grid)                                                 
-│ • Cards mirror home layout                                                   │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+### Accounts
 
-**Key Decisions:**
-- **Review CTA** links to the unified CRUD page introduced in this sprint, satisfying LO1.9 + LO1.13 evidence.
-- **Metadata**: `meta_description` pulls from `product.meta_description` so SEO snippets match catalog copy.
-- **Accessibility**: Carousel controls labelled for screen readers; images carry `alt_text`.
+- [Register](media/wireframes/16-register.png)
+- [Login](media/wireframes/17-login.png)
+- [Resend Verification](media/wireframes/18-resend-verification.png)
+- [Profile](media/wireframes/19-profile.png)
+- [Address Form](media/wireframes/20-address-form.png)
 
-### Additional Page Wireframes
+### Reviews
 
-**Checkout (templates/payments/checkout.html)**
-```
-┌─────────────────────┬─────────────────────────────────────┐
-│ Address selection   │ Order summary, taxes, Stripe button │
-│ + notes             │ Status badges + audit trail         │
-└─────────────────────┴─────────────────────────────────────┘
-```
+- [Review Manage](media/wireframes/21-review-manage.png)
+- [Review List](media/wireframes/22-review-list.png)
 
-**Storefront Admin (templates/store/admin/*.html)**
-```
-┌───────────────┬──────────────────────────────────────────┐
-│ Filter + search│ Paginated table w/ status badges        │
-│ Quick actions  │ Inline links to CRUD + gallery manage   │
-└───────────────┴──────────────────────────────────────────┘
-```
+### Marketing
 
-*The hero/product assets in `static/images/` were used as references, and templates were captured locally with `python manage.py runserver` for screenshots.*
+- [Marketing Lead Form](media/wireframes/23-marketing-lead-form.png)
+- [Marketing Lead List (staff)](media/wireframes/24-marketing-lead-list.png)
+
+### Storefront Admin
+
+- [Admin Product List](media/wireframes/25-admin-product-list.png)
+- [Admin Product Form](media/wireframes/26-admin-product-form.png)
+- [Admin Product Delete Confirm](media/wireframes/27-admin-product-delete.png)
+- [Admin Product Image Add](media/wireframes/28-admin-image-add.png)
+- [Admin Product Image Delete Confirm](media/wireframes/29-admin-image-delete.png)
 
 ## Key Highlights
 
@@ -762,6 +729,7 @@ The automated test suite provides confidence in core functionality. Additional t
 | `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments | Test keys used | Live keys and webhook secret configured |
 | `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | SMTP delivery | Can keep console backend | Use SMTP/SendGrid credentials |
 | `SITE_URL` | Used in transactional links | e.g. `http://localhost:8000` | e.g. `https://your-app.herokuapp.com` |
+| `SITE_ID` | Required by `django.contrib.sites`/allauth | Usually `1` locally | Keep `1` and update the Site domain to your Heroku hostname |
 | `USE_AWS` | Toggle S3-backed media storage | Leave `False` to store uploads locally | Set `True` so uploads land in S3 |
 | `AWS_STORAGE_BUCKET_NAME`, `AWS_S3_REGION_NAME`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_SIGNATURE_VERSION`, `AWS_S3_CUSTOM_DOMAIN`, `AWS_LOCATION` | S3 configuration for media | Optional when `USE_AWS=False` | Required when `USE_AWS=True` (use the region code, e.g. `eu-west-1`) |
 
@@ -786,6 +754,19 @@ The automated test suite provides confidence in core functionality. Additional t
 3. Leave `DEBUG=True` and `ALLOWED_HOSTS=localhost,127.0.0.1` locally; swap to `DEBUG=False` and your production hostname(s) on Heroku.
 4. Use either `DATABASE_URL=postgres://...` or the individual `DB_*` variables. `dj-database-url` takes precedence when `DATABASE_URL` is present. If you leave both blank, Django now falls back to SQLite (`db.sqlite3`) for local smoke tests.
 5. Commit **only** `.env.example`; keep `.env` out of git. On Heroku, replicate the same key names under Settings → Config Vars or via `heroku config:set KEY=value`.
+
+#### Email Verification (django-allauth)
+
+- The auth flow now uses django-allauth; users cannot log in until their primary email is confirmed.
+- Run `python manage.py migrate` after pulling these changes to create the `sites` and `allauth` tables.
+- Set `SITE_URL` and `SITE_ID` in Heroku Config Vars, then update the Sites framework to your hostname:
+
+  ```bash
+  heroku run python manage.py shell -c "from django.contrib.sites.models import Site; Site.objects.update_or_create(id=1, defaults={'domain': 'your-app-name.herokuapp.com', 'name': 'ComfyZone'})"
+  ```
+
+- Configure SMTP (SendGrid/SES/Gmail) via the `EMAIL_*` variables plus `DEFAULT_FROM_EMAIL`; production defaults to SMTP when `DEBUG=False`.
+- Confirmation links expire after `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS` (default 1 day).
 
 ### Static Files Workflow
 
@@ -846,6 +827,8 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=your-email@gmail.com
 SITE_URL=https://your-app-name.herokuapp.com
+SITE_ID=1
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS=1
 USE_AWS=True
 AWS_STORAGE_BUCKET_NAME=your-bucket
 AWS_S3_REGION_NAME=eu-west-1
@@ -870,6 +853,8 @@ heroku config:set EMAIL_USE_TLS=True
 heroku config:set EMAIL_HOST_USER=your-email@gmail.com
 heroku config:set EMAIL_HOST_PASSWORD=your-app-password
 heroku config:set DEFAULT_FROM_EMAIL=your-email@gmail.com
+heroku config:set SITE_ID=1
+heroku config:set ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS=1
 heroku config:set SITE_URL=https://your-app-name.herokuapp.com
 heroku config:set USE_AWS=True
 heroku config:set AWS_STORAGE_BUCKET_NAME=your-bucket
@@ -1154,7 +1139,7 @@ Detailed artefacts (board process, sprint logs, and screenshots) now live under 
 
 | Platform | Handle | Status | Content Focus |
 | --- | --- | --- | --- |
-| Facebook | [ComfyZone Official](https://facebook.com/comfyzone) | New (0 followers) | Product launches, live shopping |
+| Facebook | [ComfyZone Official](https://www.facebook.com/profile.php?id=61584756575041) | New (0 followers) | Product launches, live shopping |
 | Instagram | [@comfyzone](https://instagram.com/comfyzone) | New | Lifestyle photography, Reels |
 | Twitter/X | [@ShopComfyZone](https://twitter.com/ShopComfyZone) | New | Support, flash sales |
 | LinkedIn | [ComfyZone](https://linkedin.com/company/comfyzone) | New | Company updates, hiring |
@@ -1201,8 +1186,8 @@ Coding standards: PEP 8, descriptive docstrings, minimal inline comments for com
 - Django & Python communities for the incredible tooling.
 - Stripe for their developer-friendly payment APIs.
 - Untree.co for the Furni visual language adapted here.
-- Everyone contributing bug reports, ideas, or fixes.
+- CodeInstitute mentors for the comprehensive long bootcamp and support
 
 ---
 
-**Made with ❤️ by the ComfyZone team.** Update this README whenever you add new features, APIs, or deployment targets so it remains your single source of truth.
+**Made with ❤️ by the ComfyZone team.** This README will be updated whenever  new features, APIs, or deployment targets are added so it remains single source of truth for the App.

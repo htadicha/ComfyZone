@@ -15,7 +15,6 @@ print("=" * 60)
 
 storage = S3Boto3Storage()
 
-# Check if file exists
 file_path = "media/products/16216048_rm405-c02a.jpg"
 exists = storage.exists(file_path)
 print(f"\n✓ File exists in S3: {exists}")
@@ -24,7 +23,6 @@ if not exists:
     print("\n❌ File NOT found at that path!")
     print("\nChecking database for this image...")
     
-    # Find in database
     images = ProductImage.objects.all()
     for img in images:
         if '16216048_rm405-c02a' in str(img.image):
@@ -32,7 +30,6 @@ if not exists:
             print(f"  Image field: {img.image.name}")
             print(f"  Full URL: {img.image.url}")
             
-            # Check actual S3 path
             actual_exists = storage.exists(img.image.name)
             print(f"  Exists at actual path: {actual_exists}")
             break

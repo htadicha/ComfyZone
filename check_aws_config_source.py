@@ -14,7 +14,6 @@ print("AWS Configuration Source Checker")
 print("=" * 60)
 print()
 
-# Check environment variables directly
 print("🔍 Checking Environment Variables:")
 print("-" * 60)
 aws_vars = [
@@ -30,7 +29,6 @@ env_source = {}
 for var in aws_vars:
     env_value = os.getenv(var)
     if env_value:
-        # Mask sensitive values
         if 'KEY' in var or 'SECRET' in var:
             display = env_value[:4] + '****' if len(env_value) > 4 else '****'
         else:
@@ -45,7 +43,6 @@ print()
 print("📋 Current Django Settings:")
 print("-" * 60)
 
-# Check what Django sees
 settings_values = {
     'USE_AWS': getattr(settings, 'USE_AWS', 'NOT SET'),
     'AWS_STORAGE_BUCKET_NAME': getattr(settings, 'AWS_STORAGE_BUCKET_NAME', 'NOT SET'),
@@ -68,7 +65,6 @@ print()
 print("🔎 Source Analysis:")
 print("-" * 60)
 
-# Analyze where values are coming from
 if settings_values['USE_AWS']:
     print("  ✓ USE_AWS is True - AWS is enabled")
     

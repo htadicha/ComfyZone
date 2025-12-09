@@ -9,6 +9,7 @@ from .models import MarketingLead, NewsletterSubscriber
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend", DEFAULT_FROM_EMAIL="test@example.com")
 class NewsletterTests(TestCase):
     def test_subscribe_creates_inactive_record_and_sends_email(self):
+        """Ensure subscribe creates inactive subscriber and sends email."""
         response = self.client.post(
             reverse("marketing:subscribe"),
             {"email": "hello@example.com", "name": "Hello", "consent": True},
@@ -21,6 +22,7 @@ class NewsletterTests(TestCase):
         self.assertIn(str(subscriber.confirmation_token), mail.outbox[0].body)
 
     def test_confirm_subscription_activates_user(self):
+        """Ensure confirmation token activates subscriber."""
         subscriber = NewsletterSubscriber.objects.create(
             email="hello@example.com",
             name="Hello",
@@ -38,6 +40,7 @@ class NewsletterTests(TestCase):
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend", DEFAULT_FROM_EMAIL="test@example.com")
 class MarketingLeadTests(TestCase):
     def test_lead_form_requires_consent(self):
+        """Ensure consent is required for lead submissions."""
         response = self.client.post(
             reverse("marketing:lead_create"),
             {"name": "Jane", "email": "jane@example.com", "interest": "Sofa refresh", "consent": False},
@@ -46,6 +49,7 @@ class MarketingLeadTests(TestCase):
         self.assertEqual(MarketingLead.objects.count(), 0)
 
     def test_lead_form_records_entry(self):
+        """Ensure a valid lead creates a record and sends email."""
         response = self.client.post(
             reverse("marketing:lead_create"),
             {
@@ -60,12 +64,14 @@ class MarketingLeadTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
 
     def test_lead_dashboard_requires_staff(self):
+        """Ensure non-staff are redirected from lead dashboard."""
         non_staff = get_user_model().objects.create_user(email="user@example.com", password="test12345")
         self.client.force_login(non_staff)
         response = self.client.get(reverse("marketing:lead_list"))
-        self.assertEqual(response.status_code, 302)  # redirected to login (fails user_passes_test)
+        self.assertEqual(response.status_code, 302)
 
     def test_lead_dashboard_for_staff(self):
+        """Ensure staff can access the lead dashboard."""
         staff = get_user_model().objects.create_user(email="staff@example.com", password="test12345", is_staff=True)
         self.client.force_login(staff)
         response = self.client.get(reverse("marketing:lead_list"))

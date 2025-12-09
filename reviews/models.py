@@ -38,11 +38,12 @@ class Review(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Return the reviewer, product, and rating summary."""
         return f"{self.user.email} - {self.product.name} - {self.rating} stars"
 
     def save(self, *args, **kwargs):
-        # Check if user has purchased this product
-        if not self.pk:  # Only on creation
+        """Persist review, marking verified purchases and refreshing product data."""
+        if not self.pk:
             from orders.models import OrderItem
             has_purchased = OrderItem.objects.filter(
                 order__user=self.user,
@@ -52,5 +53,4 @@ class Review(models.Model):
 
         super().save(*args, **kwargs)
 
-        # Update product average rating (could be done with signals)
-        self.product.save()  # This will trigger any post-save signals
+        self.product.save()

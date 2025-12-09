@@ -1,76 +1,67 @@
 import logging
-import uuid
-from datetime import timedelta
 
-from django.conf import settings
-from django.core.mail import send_mail
-from django.utils import timezone
-
-from .models import User
+from allauth.account.models import EmailAddress, EmailConfirmation, EmailConfirmationHMAC
+from allauth.account.utils import send_email_confirmation
 
 logger = logging.getLogger(__name__)
 
 
-def _issue_verification_token(user, validity_hours: int = 24):
-    """Assign a fresh verification token and expiry to the user."""
-    token = uuid.uuid4()
-    user.verification_token = token
-    user.verification_token_expires = timezone.now() + timedelta(hours=validity_hours)
-    user.save(update_fields=["verification_token", "verification_token_expires"])
-    return token
-
-
-def send_verification_email(user, *, regenerate_token: bool = True):
-    """Send email verification link to user."""
-    if regenerate_token or not user.verification_token or not user.verification_token_expires:
-        token = _issue_verification_token(user)
-    else:
-        # Ensure existing token is still valid; otherwise refresh it.
-        if user.verification_token_expires <= timezone.now():
-            token = _issue_verification_token(user)
-        else:
-            token = user.verification_token
-
-    verification_url = f"{settings.SITE_URL}/accounts/verify-email/{token}/"
-
-    subject = "Verify Your Email Address"
-    message = (
-        "Thank you for registering with our furniture store!\n\n"
-        "Please click the following link to verify your email address:\n"
-        f"{verification_url}\n\n"
-        "This link will expire in 24 hours.\n\n"
-        "If you did not create an account, please ignore this email."
+def _ensure_primary_email_address(user):
+    """
+    Make sure the user has a primary EmailAddress record for allauth.
+    This keeps email verification and login flows in sync with allauth.
+    """
+    email_address, _ = EmailAddress.objects.get_or_create(
+        user=user,
+        email=user.email,
+        defaults={"primary": True, "verified": False},
     )
 
+    if not email_address.primary:
+        email_address.set_as_primary()
+
+    return email_address
+
+
+def send_verification_email(user, *, request=None, signup: bool = True):
+    """
+    Issue an allauth email confirmation for the given user.
+
+    The `signup` flag is passed through to allauth so that the correct
+    email template is used for first-time confirmations vs. manual resends.
+    """
+    email_address = _ensure_primary_email_address(user)
+
+    if email_address.verified:
+        logger.info("User %s already verified; skipping confirmation email.", user.email)
+        return email_address
+
+    send_email_confirmation(request, user, signup=signup)
+    return email_address
+
+
+def verify_email_token(key, request=None):
+    """
+    Confirm an allauth email confirmation key and return the user, or None.
+
+    This provides a bridge for the legacy verify-email URL to use the
+    allauth confirmation model, so existing links continue to function.
+    """
+    if not key:
+        return None
+
     try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
+        confirmation = EmailConfirmationHMAC.from_key(key)
     except Exception:
-        logger.exception("Failed to send verification email to %s", user.email)
-        raise
+        confirmation = None
 
+    if confirmation:
+        confirmation.confirm(request)
+        return confirmation.email_address.user
 
-def verify_email_token(token):
-    """Verify email token and activate user account."""
-    if not token:
-        return None
-
-    try:
-        user = User.objects.get(verification_token=token)
-    except User.DoesNotExist:
-        return None
-
-    if user.verification_token_expires and user.verification_token_expires > timezone.now():
-        user.is_verified = True
-        user.is_active = True
-        user.verification_token = uuid.uuid4()
-        user.verification_token_expires = None
-        user.save(update_fields=["is_verified", "is_active", "verification_token", "verification_token_expires"])
-        return user
+    confirmation = EmailConfirmation.objects.filter(key=key).first()
+    if confirmation:
+        confirmation.confirm(request)
+        return confirmation.email_address.user
 
     return None

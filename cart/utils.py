@@ -9,7 +9,6 @@ def get_cart(request):
         cart, created = Cart.objects.get_or_create(user=request.user)
         return cart
     else:
-        # For guest users, return None (we'll handle session cart in views)
         return None
 
 
@@ -80,8 +79,7 @@ def get_session_cart_total(request):
             product = Product.objects.get(id=item_data["product_id"])
             quantity = item_data["quantity"]
             price = product.price
-            
-            # Add variation adjustments
+
             if item_data.get("variation_ids"):
                 variations = ProductVariation.objects.filter(
                     id__in=item_data["variation_ids"]
@@ -115,30 +113,26 @@ def merge_carts(request, user):
             product = Product.objects.get(id=item_data["product_id"])
             quantity = item_data["quantity"]
             variation_ids = item_data.get("variation_ids", [])
-            
-            # Check if item with same product and variations exists
+
             cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
                 product=product,
             )
-            
+
             if not created:
-                # Update quantity if item exists
                 cart_item.quantity += quantity
             else:
                 cart_item.quantity = quantity
-            
+
             cart_item.save()
-            
-            # Add variations
+
             if variation_ids:
                 variations = ProductVariation.objects.filter(id__in=variation_ids)
                 cart_item.variations.set(variations)
         
         except Product.DoesNotExist:
             continue
-    
-    # Clear session cart after merging
+
     request.session["cart"] = {}
     request.session.modified = True
 

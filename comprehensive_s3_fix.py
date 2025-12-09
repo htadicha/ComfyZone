@@ -28,7 +28,6 @@ if not getattr(settings, 'USE_AWS', False):
     print("   This script requires USE_AWS=True")
     sys.exit(1)
 
-# Get AWS settings
 bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
 region_name = getattr(settings, 'AWS_S3_REGION_NAME', '')
 aws_access_key_id = getattr(settings, 'AWS_ACCESS_KEY_ID', '')
@@ -45,7 +44,6 @@ print(f"  Region: {region_name}")
 print(f"  Location: {aws_location}")
 print()
 
-# Initialize S3 client
 try:
     s3_client = boto3.client(
         's3',
@@ -54,14 +52,12 @@ try:
         aws_secret_access_key=aws_secret_access_key
     )
     
-    # Test connection
     s3_client.head_bucket(Bucket=bucket_name)
     print("✅ S3 connection successful\n")
 except Exception as e:
     print(f"❌ S3 connection failed: {e}")
     sys.exit(1)
 
-# Get all product images
 images = ProductImage.objects.all()
 
 if not images:
@@ -81,7 +77,6 @@ for img in images:
     image_name = img.image.name
     product_name = img.product.name
     
-    # Construct S3 key - handle different formats
     if image_name.startswith(aws_location + '/'):
         s3_key = image_name
     elif image_name.startswith('/'):
@@ -94,7 +89,6 @@ for img in images:
     print(f"   S3 Key: {s3_key}")
     print(f"   URL: {img.image.url}")
     
-    # Check if file exists
     try:
         s3_client.head_object(Bucket=bucket_name, Key=s3_key)
     except ClientError as e:
@@ -107,7 +101,6 @@ for img in images:
             error_count += 1
             continue
     
-    # Check current ACL
     try:
         acl_response = s3_client.get_object_acl(Bucket=bucket_name, Key=s3_key)
         grants = acl_response.get('Grants', [])
@@ -125,7 +118,6 @@ for img in images:
             print(f"   ✅ Already has public-read ACL")
             already_public_count += 1
         else:
-            # Fix ACL
             try:
                 s3_client.put_object_acl(
                     Bucket=bucket_name,

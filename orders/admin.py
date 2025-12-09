@@ -60,6 +60,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     def status_badge(self, obj):
+        """Render a colored status badge for admin list display."""
         color_map = {
             "new": "primary",
             "accepted": "info",
@@ -75,8 +76,8 @@ class OrderAdmin(admin.ModelAdmin):
     status_badge.short_description = "Status"
 
     def save_model(self, request, obj, form, change):
+        """Save the order and trigger confirmation when status changes."""
         super().save_model(request, obj, form, change)
-        # Send email notification on status change
         if change and "status" in form.changed_data:
             if obj.status == "accepted":
                 obj.send_confirmation_email()

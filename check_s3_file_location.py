@@ -30,7 +30,6 @@ print(f"AWS_LOCATION: {getattr(settings, 'AWS_LOCATION', 'media')}")
 print(f"MEDIA_URL: {getattr(settings, 'MEDIA_URL', 'NOT SET')}")
 print()
 
-# Check product images in database
 print("📸 Product Images in Database:")
 print("-" * 60)
 images = ProductImage.objects.all()[:10]  # First 10 images
@@ -47,7 +46,6 @@ else:
         print(f"    Image URL: {img.image.url}")
         print(f"    Full path in S3: {storage.location}/{img.image.name}")
         
-        # Try to check if file exists
         try:
             exists = storage.exists(img.image.name)
             print(f"    ✓ File exists in S3: {exists}")
@@ -55,7 +53,6 @@ else:
             print(f"    ✗ Error checking file: {e}")
         print()
 
-# List actual files in S3 bucket
 print("🔍 Files in S3 Bucket:")
 print("-" * 60)
 try:

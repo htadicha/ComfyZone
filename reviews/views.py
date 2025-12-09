@@ -32,7 +32,7 @@ def manage_review(request, product_slug):
             review = form.save(commit=False)
             review.product = product
             review.user = request.user
-            review.is_approved = False  # Require moderation (or re-moderation)
+            review.is_approved = False
             review.save()
 
             if created:
@@ -88,7 +88,6 @@ def product_reviews(request, product_slug):
     product = get_object_or_404(Product, slug=product_slug, is_active=True)
     reviews = Review.objects.filter(product=product, is_approved=True).order_by("-created_at")
 
-    # Check if user can review
     can_review = False
     user_review = None
     if request.user.is_authenticated:

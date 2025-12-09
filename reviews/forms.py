@@ -17,16 +17,18 @@ class ReviewForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Initialize form with crispy layout and hidden rating widget."""
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.layout = Layout(
             "title",
             "comment",
-            "rating",  # Hidden field for the actual rating value
+            "rating",
             Submit("submit", "Submit Review", css_class="btn btn-primary")
         )
 
     def clean_rating(self):
+        """Validate that rating is between one and five."""
         rating = self.cleaned_data.get("rating")
         if not rating or int(rating) not in {1, 2, 3, 4, 5}:
             raise ValidationError("Please select a rating between 1 and 5 stars.")

@@ -32,14 +32,14 @@ def register_view(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False  # Require verification before login
+            user.is_active = False
             user.is_verified = False
             user.save()
 
             Profile.objects.create(user=user)
 
             try:
-                send_verification_email(user)
+                send_verification_email(user, request=request, signup=True)
             except Exception:
                 logger.exception("Failed to send verification email to %s", user.email)
                 resend_url = f"{reverse('accounts:resend_verification')}?email={user.email}"
@@ -114,7 +114,7 @@ def logout_view(request):
 @require_http_methods(["GET"])
 def verify_email_view(request, token):
     """Verify user email with token."""
-    user = verify_email_token(token)
+    user = verify_email_token(token, request=request)
 
     if user:
         messages.success(request, "Email verified successfully! You can now log in.")
@@ -134,7 +134,7 @@ def resend_verification_view(request):
         if form.is_valid():
             user = form.user
             try:
-                send_verification_email(user, regenerate_token=True)
+                send_verification_email(user, request=request, signup=False)
             except Exception:
                 logger.exception("Failed to re-send verification email to %s", user.email)
                 messages.error(

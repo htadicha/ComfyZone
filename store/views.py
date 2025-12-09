@@ -22,8 +22,7 @@ def home(request):
 def shop(request):
     """Shop page with search and filtering."""
     products = Product.objects.filter(is_active=True)
-    
-    # Search
+
     search_query = request.GET.get("q", "")
     if search_query:
         products = products.filter(
@@ -31,8 +30,7 @@ def shop(request):
             Q(description__icontains=search_query) |
             Q(short_description__icontains=search_query)
         )
-    
-    # Category filter
+
     category_slug = request.GET.get("category", "")
     if category_slug:
         try:
@@ -40,8 +38,7 @@ def shop(request):
             products = products.filter(category=category)
         except Category.DoesNotExist:
             pass
-    
-    # Price range filter
+
     min_price = request.GET.get("min_price", "")
     max_price = request.GET.get("max_price", "")
     if min_price:
@@ -54,15 +51,13 @@ def shop(request):
             products = products.filter(price__lte=float(max_price))
         except ValueError:
             pass
-    
-    # Availability filter
+
     in_stock = request.GET.get("in_stock", "")
     if in_stock == "true":
         products = products.filter(stock__gt=0)
     elif in_stock == "false":
         products = products.filter(stock=0)
-    
-    # Sorting
+
     sort_by = request.GET.get("sort", "newest")
     if sort_by == "price_low":
         products = products.order_by("price")
@@ -74,17 +69,15 @@ def shop(request):
         products = products.annotate(
             avg_rating=Avg("reviews__rating")
         ).order_by("-avg_rating")
-    else:  # newest
+    else:
         products = products.order_by("-created_at")
-    
-    # Pagination
-    paginator = Paginator(products, 12)  # 12 products per page
+
+    paginator = Paginator(products, 12)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
-    
-    # Get all categories for filter
+
     categories = Category.objects.filter(is_active=True, parent=None)
-    
+
     context = {
         "products": page_obj,
         "categories": categories,
@@ -104,25 +97,22 @@ def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
     images = product.images.all()
     variations = product.variations.filter(is_active=True)
-    
-    # Get approved reviews
+
     reviews = product.reviews.filter(is_approved=True).order_by("-created_at")[:10]
     average_rating = product.get_average_rating()
     review_count = product.get_review_count()
-    
-    # Check if user can review
+
     can_review = False
     user_review = None
     if request.user.is_authenticated:
         user_review = product.reviews.filter(user=request.user).first()
         can_review = not user_review or not user_review.is_approved
-    
-    # Related products (same category)
+
     related_products = Product.objects.filter(
         category=product.category,
         is_active=True
     ).exclude(id=product.id)[:4]
-    
+
     context = {
         "product": product,
         "images": images,
@@ -142,15 +132,13 @@ def category_view(request, slug):
     """Category page view."""
     category = get_object_or_404(Category, slug=slug, is_active=True)
     products = Product.objects.filter(category=category, is_active=True)
-    
-    # Get subcategories
+
     subcategories = category.children.filter(is_active=True)
-    
-    # Pagination
+
     paginator = Paginator(products, 12)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         "category": category,
         "products": page_obj,
@@ -174,7 +162,7 @@ def contact(request):
     """Contact page with form."""
     from marketing.forms import MarketingLeadForm
     from marketing.views import _notify_marketing_team
-    
+
     if request.method == "POST":
         form = MarketingLeadForm(request.POST)
         if form.is_valid():
@@ -210,8 +198,7 @@ def is_staff_user(user):
 def admin_product_list(request):
     """Admin view to list all products."""
     products = Product.objects.all().order_by('-created_at')
-    
-    # Search functionality
+
     search_query = request.GET.get('q', '')
     if search_query:
         products = products.filter(
@@ -219,19 +206,17 @@ def admin_product_list(request):
             Q(sku__icontains=search_query) |
             Q(description__icontains=search_query)
         )
-    
-    # Filter by status
+
     status_filter = request.GET.get('status', '')
     if status_filter == 'active':
         products = products.filter(is_active=True)
     elif status_filter == 'inactive':
         products = products.filter(is_active=False)
-    
-    # Pagination
+
     paginator = Paginator(products, 20)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'products': page_obj,
         'search_query': search_query,
@@ -248,25 +233,24 @@ def admin_product_create(request):
         form = ProductForm(request.POST)
         if form.is_valid():
             product = form.save()
-            
-            # Handle image uploads if any
+
             images = request.FILES.getlist('images')
             if images:
                 for idx, image_file in enumerate(images):
                     ProductImage.objects.create(
                         product=product,
                         image=image_file,
-                        is_primary=(idx == 0),  # First image is primary
+                        is_primary=(idx == 0),
                         order=idx
                     )
                 messages.success(request, f'Product "{product.name}" created with {len(images)} image(s)!')
             else:
                 messages.success(request, f'Product "{product.name}" created successfully!')
-            
+
             return redirect('store:admin_product_update', pk=product.pk)
     else:
         form = ProductForm()
-    
+
     context = {'form': form, 'action': 'Create', 'images': [], 'product': None}
     return render(request, 'store/admin/product_form.html', context)
 
@@ -276,7 +260,7 @@ def admin_product_create(request):
 def admin_product_update(request, pk):
     """Admin view to update an existing product."""
     product = get_object_or_404(Product, pk=pk)
-    
+
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
         if form.is_valid():
@@ -285,10 +269,9 @@ def admin_product_update(request, pk):
             return redirect('store:admin_product_list')
     else:
         form = ProductForm(instance=product)
-    
-    # Get existing images
+
     images = product.images.all()
-    
+
     context = {'form': form, 'product': product, 'action': 'Update', 'images': images}
     return render(request, 'store/admin/product_form.html', context)
 
@@ -298,13 +281,13 @@ def admin_product_update(request, pk):
 def admin_product_delete(request, pk):
     """Admin view to delete a product."""
     product = get_object_or_404(Product, pk=pk)
-    
+
     if request.method == 'POST':
         product_name = product.name
         product.delete()
         messages.success(request, f'Product "{product_name}" deleted successfully!')
         return redirect('store:admin_product_list')
-    
+
     context = {'product': product}
     return render(request, 'store/admin/product_confirm_delete.html', context)
 
@@ -314,7 +297,7 @@ def admin_product_delete(request, pk):
 def admin_product_image_add(request, pk):
     """Admin view to add an image to a product."""
     product = get_object_or_404(Product, pk=pk)
-    
+
     if request.method == 'POST':
         form = ProductImageForm(request.POST, request.FILES)
         if form.is_valid():
@@ -325,7 +308,7 @@ def admin_product_image_add(request, pk):
             return redirect('store:admin_product_update', pk=product.pk)
     else:
         form = ProductImageForm()
-    
+
     context = {'form': form, 'product': product}
     return render(request, 'store/admin/product_image_form.html', context)
 
@@ -336,11 +319,11 @@ def admin_product_image_delete(request, pk):
     """Admin view to delete a product image."""
     image = get_object_or_404(ProductImage, pk=pk)
     product_pk = image.product.pk
-    
+
     if request.method == 'POST':
         image.delete()
         messages.success(request, 'Image deleted successfully!')
         return redirect('store:admin_product_update', pk=product_pk)
-    
+
     context = {'image': image}
     return render(request, 'store/admin/product_image_confirm_delete.html', context)

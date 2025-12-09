@@ -13,12 +13,10 @@ urlpatterns = [
     path("contact/", views.contact, name="contact"),
     path("terms/", views.terms, name="terms"),
     path("privacy/", views.privacy, name="privacy"),
-    # Admin product management
     path("manage/products/", views.admin_product_list, name="admin_product_list"),
     path("manage/products/create/", views.admin_product_create, name="admin_product_create"),
     path("manage/products/<int:pk>/update/", views.admin_product_update, name="admin_product_update"),
     path("manage/products/<int:pk>/delete/", views.admin_product_delete, name="admin_product_delete"),
-    # Admin product image management
     path("manage/products/<int:pk>/images/add/", views.admin_product_image_add, name="admin_product_image_add"),
     path("manage/products/images/<int:pk>/delete/", views.admin_product_image_delete, name="admin_product_image_delete"),
 ]

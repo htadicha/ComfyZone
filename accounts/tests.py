@@ -1,10 +1,7 @@
-import uuid
-from datetime import timedelta
-
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils import timezone
+from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 
 from .models import Profile, User
 
@@ -31,10 +28,12 @@ class RegistrationFlowTests(TestCase):
         self.assertTrue(Profile.objects.filter(user=user).exists())
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(str(user.verification_token), mail.outbox[0].body)
+        self.assertIn("/accounts/confirm-email/", mail.outbox[0].body)
+        self.assertTrue(
+            EmailAddress.objects.filter(user=user, email=user.email, verified=False, primary=True).exists()
+        )
 
     def test_verify_email_activates_user(self):
-        token = uuid.uuid4()
         user = User.objects.create_user(
             email="mark@example.com",
             password="password123",
@@ -43,19 +42,19 @@ class RegistrationFlowTests(TestCase):
         )
         user.is_active = False
         user.is_verified = False
-        user.verification_token = token
-        user.verification_token_expires = timezone.now() + timedelta(hours=2)
         user.save()
 
-        old_token = token
-        response = self.client.get(reverse("accounts:verify_email", kwargs={"token": token}))
-        self.assertRedirects(response, reverse("accounts:login"))
+        email_address = EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
+        confirmation = EmailConfirmationHMAC(email_address)
+
+        response = self.client.get(reverse("account_confirm_email", args=[confirmation.key]), follow=True)
 
         user.refresh_from_db()
         self.assertTrue(user.is_active)
         self.assertTrue(user.is_verified)
-        self.assertIsNone(user.verification_token_expires)
-        self.assertNotEqual(user.verification_token, old_token)
+        email_address.refresh_from_db()
+        self.assertTrue(email_address.verified)
+        self.assertEqual(response.status_code, 200)
 
     def test_resend_verification_creates_new_token_and_email(self):
         user = User.objects.create_user(
@@ -66,11 +65,8 @@ class RegistrationFlowTests(TestCase):
         )
         user.is_active = False
         user.is_verified = False
-        user.verification_token = uuid.uuid4()
-        user.verification_token_expires = timezone.now() + timedelta(hours=1)
         user.save()
 
-        old_token = user.verification_token
         response = self.client.post(
             reverse("accounts:resend_verification"),
             {"email": user.email},
@@ -79,6 +75,8 @@ class RegistrationFlowTests(TestCase):
         self.assertRedirects(response, reverse("accounts:login"))
 
         user.refresh_from_db()
-        self.assertNotEqual(old_token, user.verification_token)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(str(user.verification_token), mail.outbox[0].body)
+        self.assertIn("/accounts/confirm-email/", mail.outbox[0].body)
+        self.assertTrue(
+            EmailAddress.objects.filter(user=user, email=user.email, verified=False, primary=True).exists()
+        )

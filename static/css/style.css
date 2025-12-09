@@ -1,9 +1,3 @@
-/*
-* Template Name: UntreeStore
-* Template Author: Untree.co
-* Author URI: https://untree.co/
-* License: https://creativecommons.org/licenses/by/3.0/
-*/
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 :root {
   --font-family-primary: "Inter", sans-serif;
@@ -315,7 +309,6 @@ a {
     .product-section .product-item:hover:before {
       height: 70%; }
 
-  /* Ensure product grid columns have equal heights */
   .product-section .row > [class*="col-"] {
     display: flex;
     flex-direction: column; }
@@ -768,7 +761,6 @@ textarea {
     border-radius: 50%;
     background: rgba(59, 93, 80, 0.2); }
 
-/* Dropdown hover functionality */
 .dropdown-hover:hover .dropdown-menu {
   display: block;
   margin-top: 0; }
@@ -776,11 +768,9 @@ textarea {
 .dropdown-hover .dropdown-toggle {
   cursor: pointer; }
 
-/* Prevent dropdown from closing when moving mouse to menu */
 .dropdown-hover .dropdown-menu {
   margin-top: 0; }
 
-/* Fix sofa image positioning to prevent overlap */
 .footer-section .sofa-img {
   position: absolute;
   bottom: 0;
@@ -790,25 +780,21 @@ textarea {
   max-width: 200px;
   opacity: 0.6; }
 
-/* Ensure footer content appears above sofa image */
 .footer-section .row {
   position: relative;
   z-index: 2; }
 
-/* Ensure consultation card appears above sofa image with proper spacing */
 .footer-section .card.shadow-sm,
 .footer-section .row > .col-lg-4:last-child .card {
   position: relative;
   z-index: 10;
   box-shadow: none !important; }
 
-/* Add padding to right column to prevent overlap with sofa image */
 @media (min-width: 992px) {
   .footer-section .row > .col-lg-4:last-child {
     padding-right: 220px;
     padding-left: 0; } }
 
-/* Messages container - collapse when empty */
 #messages-container {
   transition: margin 0.3s ease, padding 0.3s ease;
 }
@@ -821,7 +807,6 @@ textarea {
   overflow: hidden;
 }
 
-/* Ensure dismissed alerts don't take up space */
 .alert.fade:not(.show) {
   display: none !important;
   height: 0;
@@ -830,7 +815,6 @@ textarea {
   overflow: hidden;
 }
 
-/* Ensure button text is visible in consultation card with smaller text */
 .footer-section .card.shadow-sm .btn-outline-primary,
 .footer-section .row > .col-lg-4:last-child .card .btn-outline-primary {
   color: #3b5d50;
@@ -844,7 +828,6 @@ textarea {
     background-color: #3b5d50;
     border-color: #3b5d50; }
 
-/* Related Products Horizontal Layout */
 .related-product-item {
   text-decoration: none;
   display: block;

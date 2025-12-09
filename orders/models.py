@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from django.core.mail import send_mail
-from django.conf import settings
 from store.models import Product
 from accounts.models import Address
 import uuid
@@ -29,8 +28,7 @@ class Order(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
-    
-    # Shipping address
+
     shipping_address = models.ForeignKey(
         Address,
         on_delete=models.SET_NULL,
@@ -38,14 +36,13 @@ class Order(models.Model):
         blank=True,
         related_name="shipping_orders"
     )
-    # Or store address details directly if address is deleted
+
     shipping_street = models.CharField(max_length=255)
     shipping_city = models.CharField(max_length=100)
     shipping_state = models.CharField(max_length=100)
     shipping_postal_code = models.CharField(max_length=20)
     shipping_country = models.CharField(max_length=100, default="United States")
-    
-    # Billing address (can be same as shipping)
+
     billing_street = models.CharField(max_length=255, blank=True)
     billing_city = models.CharField(max_length=100, blank=True)
     billing_state = models.CharField(max_length=100, blank=True)
@@ -67,9 +64,11 @@ class Order(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Return a short label for the order."""
         return f"Order {self.order_number}"
 
     def save(self, *args, **kwargs):
+        """Ensure order number is set before saving."""
         if not self.order_number:
             self.order_number = self.generate_order_number()
         super().save(*args, **kwargs)
@@ -133,10 +132,10 @@ class OrderItem(models.Model):
     
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    product_name = models.CharField(max_length=200)  # Store name in case product is deleted
+    product_name = models.CharField(max_length=200)
     product_sku = models.CharField(max_length=100, blank=True)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at time of purchase
+    price = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -144,9 +143,11 @@ class OrderItem(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
+        """Return a readable representation of the order item."""
         return f"{self.product_name} x{self.quantity}"
 
     def save(self, *args, **kwargs):
+        """Snapshot product data and subtotal before saving."""
         if self.product:
             self.product_name = self.product.name
             self.product_sku = self.product.sku

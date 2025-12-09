@@ -9,6 +9,7 @@ class UserManager(BaseUserManager):
     """Custom user manager for email-based authentication."""
 
     def create_user(self, email, password=None, **extra_fields):
+        """Create and return a standard user with an email and password."""
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
@@ -18,6 +19,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
+        """Create and return a superuser with staff and superuser flags."""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -53,12 +55,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = _("users")
 
     def __str__(self):
+        """Return the email as the string representation."""
         return self.email
 
     def get_full_name(self):
+        """Return the full name or fallback to email."""
         return f"{self.first_name} {self.last_name}".strip() or self.email
 
     def get_short_name(self):
+        """Return the first name or fallback to email."""
         return self.first_name or self.email
 
 
@@ -74,6 +79,7 @@ class Profile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """Return the profile label for the related user."""
         return f"Profile of {self.user.email}"
 
 
@@ -106,11 +112,12 @@ class Address(models.Model):
         ordering = ["-is_default", "-created_at"]
 
     def __str__(self):
+        """Return a readable representation of the address."""
         return f"{self.street_address}, {self.city}, {self.state}"
 
     def save(self, *args, **kwargs):
+        """Persist the address while enforcing a single default per type."""
         if self.is_default:
-            # Unset other default addresses of the same type
             Address.objects.filter(
                 user=self.user, address_type=self.address_type, is_default=True
             ).exclude(pk=self.pk).update(is_default=False)

@@ -36,6 +36,7 @@ class Payment(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Return a readable label for the payment."""
         return f"Payment {self.transaction_id} for Order {self.order.order_number}"
 
     def get_status_display_class(self):

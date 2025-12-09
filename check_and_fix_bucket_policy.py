@@ -33,7 +33,6 @@ if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key])
     print("❌ Missing required AWS configuration!")
     sys.exit(1)
 
-# Initialize S3 client
 s3_client = boto3.client(
     's3',
     region_name=region_name,
@@ -45,7 +44,6 @@ print(f"Bucket: {bucket_name}")
 print(f"Region: {region_name}")
 print()
 
-# Check current bucket policy
 print("1️⃣  Checking Current Bucket Policy")
 print("-" * 70)
 try:
@@ -55,7 +53,6 @@ try:
     print(f"   Policy JSON:")
     print(json.dumps(current_policy, indent=2))
     
-    # Check if it allows public read
     statements = current_policy.get('Statement', [])
     public_read_allowed = False
     for statement in statements:
@@ -81,7 +78,6 @@ except ClientError as e:
 
 print()
 
-# Check Block Public Access settings (we can't change these via API easily)
 print("2️⃣  Block Public Access Settings")
 print("-" * 70)
 print("   ⚠️  This must be checked manually in AWS Console")
@@ -99,7 +95,6 @@ print("   - See the policy below")
 print("   - Note: This may not work if Block Public Access blocks ACLs")
 print()
 
-# Generate recommended bucket policy
 print("3️⃣  Recommended Bucket Policy")
 print("-" * 70)
 recommended_policy = {
@@ -120,7 +115,6 @@ print()
 print(json.dumps(recommended_policy, indent=2))
 print()
 
-# Ask if user wants to apply the policy
 print("4️⃣  Apply Bucket Policy?")
 print("-" * 70)
 print("   ⚠️  WARNING: This will REPLACE your existing bucket policy!")

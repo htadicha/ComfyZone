@@ -48,7 +48,6 @@ for img in images:
     image_name = img.image.name
     url = img.image.url
     
-    # Construct S3 key
     if image_name.startswith(aws_location + '/'):
         s3_key = image_name
     elif image_name.startswith('/'):
@@ -60,7 +59,6 @@ for img in images:
     print(f"   URL: {url}")
     print(f"   S3 Key: {s3_key}")
     
-    # Check if file exists
     try:
         s3_client.head_object(Bucket=bucket_name, Key=s3_key)
         file_exists = True
@@ -76,7 +74,6 @@ for img in images:
             print()
             continue
     
-    # Check ACL
     try:
         acl_response = s3_client.get_object_acl(Bucket=bucket_name, Key=s3_key)
         grants = acl_response.get('Grants', [])
@@ -103,7 +100,6 @@ for img in images:
         else:
             print(f"   ✅ ACL is public-read")
         
-        # Test URL accessibility
         try:
             response = requests.head(url, timeout=5, allow_redirects=True)
             if response.status_code == 200:
@@ -118,7 +114,6 @@ for img in images:
                 broken += 1
         except requests.exceptions.RequestException as e:
             print(f"   ⚠️  Could not test URL: {e}")
-            # But file exists and ACL is correct, so assume it works
             if public_read:
                 working += 1
             else:

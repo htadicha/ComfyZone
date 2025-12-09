@@ -47,7 +47,7 @@ class UserAdmin(BaseUserAdmin):
             if user.is_verified:
                 continue
             try:
-                send_verification_email(user, regenerate_token=True)
+                send_verification_email(user, signup=False)
             except Exception:
                 failed += 1
             else:

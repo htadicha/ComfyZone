@@ -31,14 +31,17 @@ class Category(models.Model):
         ordering = ["name"]
 
     def __str__(self):
+        """Return the category name."""
         return self.name
 
     def save(self, *args, **kwargs):
+        """Generate slug before saving the category."""
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
+        """Return the category detail URL."""
         return reverse("store:category", kwargs={"slug": self.slug})
 
     def get_full_path(self):
@@ -52,12 +55,15 @@ class ProductManager(models.Manager):
     """Custom manager for Product model."""
     
     def active(self):
+        """Return active products with stock available."""
         return self.filter(is_active=True, stock__gt=0)
 
     def in_stock(self):
+        """Return products currently in stock."""
         return self.filter(stock__gt=0)
 
     def out_of_stock(self):
+        """Return products with zero stock."""
         return self.filter(stock=0)
 
 
@@ -82,8 +88,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=100, unique=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
-    
-    # SEO fields
+
     meta_title = models.CharField(max_length=200, blank=True)
     meta_description = models.TextField(max_length=300, blank=True)
     meta_keywords = models.CharField(max_length=255, blank=True)
@@ -97,21 +102,24 @@ class Product(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Return the product name."""
         return self.name
 
     def save(self, *args, **kwargs):
+        """Populate slug and SKU before saving the product."""
         if not self.slug:
             self.slug = slugify(self.name)
         if not self.sku:
-            # Generate SKU from name and ID
             base_sku = slugify(self.name).upper()[:8]
             self.sku = f"{base_sku}-{self.id}" if self.id else base_sku
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
+        """Return the product detail URL."""
         return reverse("store:product_detail", kwargs={"slug": self.slug})
 
     def is_in_stock(self):
+        """Return True when stock is greater than zero."""
         return self.stock > 0
 
     def get_discount_percentage(self):
@@ -154,16 +162,16 @@ class ProductImage(models.Model):
         ordering = ["is_primary", "order", "created_at"]
 
     def __str__(self):
+        """Return a label for the product image."""
         return f"{self.product.name} - Image {self.id}"
 
     def save(self, *args, **kwargs):
+        """Ensure only one primary image per product before saving."""
         if self.is_primary:
-            # Unset other primary images for this product
             ProductImage.objects.filter(product=self.product, is_primary=True).exclude(
                 pk=self.pk
             ).update(is_primary=False)
         super().save(*args, **kwargs)
-        # ACL will be set by post_save signal if using AWS
 
 
 class ProductVariation(models.Model):
@@ -179,8 +187,8 @@ class ProductVariation(models.Model):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variations")
     variation_type = models.CharField(max_length=20, choices=VARIATION_TYPE_CHOICES)
-    name = models.CharField(max_length=100)  # e.g., "Red", "Large", "Leather"
-    value = models.CharField(max_length=100, blank=True)  # e.g., "#FF0000" for color
+    name = models.CharField(max_length=100)
+    value = models.CharField(max_length=100, blank=True)
     price_adjustment = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -197,6 +205,7 @@ class ProductVariation(models.Model):
         ordering = ["variation_type", "name"]
 
     def __str__(self):
+        """Return the variation label for the product."""
         return f"{self.product.name} - {self.variation_type}: {self.name}"
 
     def get_final_price(self):
@@ -206,120 +215,95 @@ class ProductVariation(models.Model):
 
 @receiver(post_save, sender=ProductImage)
 def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
-    """
-    Signal to ensure S3 ACL is set to public-read after ProductImage is saved.
-    This is a backup to ensure ACL is set even if storage class fails.
-    Uses a small delay to allow file upload to complete.
-    """
-    if not getattr(settings, 'USE_AWS', False):
+    """Ensure S3 images receive public-read ACL after saves when AWS is enabled."""
+    if not getattr(settings, "USE_AWS", False) or not instance.image:
         return
-    
-    if not instance.image:
-        return
-    
-    # Import threading for delayed execution
+
     import threading
     import time
     import boto3
     from botocore.exceptions import ClientError
     import logging
-    
+
     logger = logging.getLogger(__name__)
-    
+    normalized_name = instance.image.name
+
     def set_acl_after_delay():
         """Set ACL after a short delay to ensure file is uploaded."""
-        # Wait a bit for the file to be fully uploaded
         time.sleep(1)
-        
+
         try:
-            # Get AWS settings
-            bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', '')
-            region_name = getattr(settings, 'AWS_S3_REGION_NAME', '')
-            aws_access_key_id = getattr(settings, 'AWS_ACCESS_KEY_ID', '')
-            aws_secret_access_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', '')
-            
+            bucket_name = getattr(settings, "AWS_STORAGE_BUCKET_NAME", "")
+            region_name = getattr(settings, "AWS_S3_REGION_NAME", "")
+            aws_access_key_id = getattr(settings, "AWS_ACCESS_KEY_ID", "")
+            aws_secret_access_key = getattr(settings, "AWS_SECRET_ACCESS_KEY", "")
+
             if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
                 logger.warning("Signal: AWS settings not complete, skipping ACL setting")
                 return
-            
-            # Use the storage class to get the correct S3 key
+
             storage = instance.image.storage
             image_name = instance.image.name
-            
-            logger.info(f"Signal: Processing image - name: {image_name}, storage: {storage.__class__.__name__}")
-            
-            # Get location from storage or settings
-            if hasattr(storage, 'location') and storage.location:
-                location = storage.location.strip('/') if storage.location else ''
+
+            logger.info(
+                "Signal: Processing image",
+                extra={"name": image_name, "storage": storage.__class__.__name__},
+            )
+
+            if hasattr(storage, "location") and storage.location:
+                location = storage.location.strip("/") if storage.location else ""
             else:
-                location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
-            
-            # Remove 'app/' prefix from location if present (common Heroku issue)
-            if location.startswith('app/'):
+                location = getattr(settings, "AWS_LOCATION", "media").strip("/")
+
+            if location.startswith("app/"):
                 location = location[4:]
-            
-            # Remove 'app/' prefix if present in image name (common Heroku issue)
-            # Also handle 'app/media/' prefix
-            if image_name.startswith('app/media/'):
-                image_name = image_name[10:]  # Remove 'app/media/'
-            elif image_name.startswith('app/'):
-                image_name = image_name[4:]  # Remove 'app/'
-            
-            # Get the actual S3 key from the storage class
-            # Try to use storage's normalization methods
-            try:
-                if hasattr(storage, '_normalize_name') and hasattr(storage, '_clean_name'):
+
+            if image_name.startswith("app/media/"):
+                image_name = image_name[10:]
+            elif image_name.startswith("app/"):
+                image_name = image_name[4:]
+
+            normalized_name = image_name.lstrip("/")
+            if hasattr(storage, "_normalize_name") and hasattr(storage, "_clean_name"):
+                try:
                     normalized_name = storage._normalize_name(storage._clean_name(image_name))
-                else:
-                    normalized_name = image_name.lstrip('/')
-                
-                # Construct S3 key - location + normalized name
-                if normalized_name.startswith(location + '/'):
-                    s3_key = normalized_name
-                elif normalized_name.startswith('/'):
-                    s3_key = f"{location}{normalized_name}"
-                else:
-                    s3_key = f"{location}/{normalized_name}" if location else normalized_name
-            except:
-                # Fallback to simple construction
-                if image_name.startswith(location + '/'):
-                    s3_key = image_name
-                elif image_name.startswith('/'):
-                    s3_key = f"{location}{image_name}"
-                else:
-                    s3_key = f"{location}/{image_name}"
-            
-            # Initialize S3 client
+                except Exception:
+                    normalized_name = image_name.lstrip("/")
+
+            if normalized_name.startswith(f"{location}/"):
+                s3_key = normalized_name
+            elif normalized_name.startswith("/"):
+                s3_key = f"{location}{normalized_name}"
+            else:
+                s3_key = f"{location}/{normalized_name}" if location else normalized_name
+
             s3_client = boto3.client(
-                's3',
+                "s3",
                 region_name=region_name,
                 aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key
+                aws_secret_access_key=aws_secret_access_key,
             )
-            
-            # Try multiple key variations in case of path issues
-            # Remove 'app/media/' if still present
+
             clean_image_name = image_name
-            if clean_image_name.startswith('app/media/'):
+            if clean_image_name.startswith("app/media/"):
                 clean_image_name = clean_image_name[10:]
-            elif clean_image_name.startswith('app/'):
+            elif clean_image_name.startswith("app/"):
                 clean_image_name = clean_image_name[4:]
-            
+
             possible_keys = [
                 s3_key,
-                clean_image_name,  # Cleaned name without location
-                image_name,  # Original name without location
-                f"{location}/{clean_image_name}",  # Location + cleaned name
-                f"{location}/{image_name}",  # Location + original name
-                f"media/{clean_image_name}",  # Explicit media/ check
-                f"media/{image_name}",  # Explicit media/ check
-                f"/{clean_image_name}",  # With leading slash
-                f"/{image_name}",  # Original with leading slash
-                f"{location}{clean_image_name}",  # Location without slash
-                f"{location}{image_name}",  # Original location without slash
+                clean_image_name,
+                image_name,
+                f"{location}/{clean_image_name}",
+                f"{location}/{image_name}",
+                f"media/{clean_image_name}",
+                f"media/{image_name}",
+                f"/{clean_image_name}",
+                f"/{image_name}",
+                f"{location}{clean_image_name}",
+                f"{location}{image_name}",
             ]
-            
-            # Remove duplicates while preserving order
+
             seen = set()
             unique_keys = []
             for key in possible_keys:
@@ -327,7 +311,6 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
                     seen.add(key)
                     unique_keys.append(key)
 
-            # Debug logging to trace path resolution issues
             logger.error(
                 "Signal: S3 key resolution debug",
                 extra={
@@ -341,53 +324,65 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
                     "bucket": bucket_name,
                 },
             )
-            
-            # Try to find the file and set ACL
+
             file_found = False
             for key in unique_keys:
                 try:
-                    # Check if file exists
-                    logger.info(f"Signal: head_object check -> bucket={bucket_name}, key={key}")
+                    logger.info(
+                        "Signal: head_object check",
+                        extra={"bucket": bucket_name, "key": key},
+                    )
                     s3_client.head_object(Bucket=bucket_name, Key=key)
                     file_found = True
                     logger.error(
                         "Signal: File found; attempting ACL",
                         extra={"key": key, "bucket": bucket_name},
                     )
-                    
-                    # File exists, now set ACL to public-read
+
                     try:
-                        logger.info(f"Signal: put_object_acl public-read -> bucket={bucket_name}, key={key}")
+                        logger.info(
+                            "Signal: put_object_acl public-read",
+                            extra={"bucket": bucket_name, "key": key},
+                        )
                         s3_client.put_object_acl(
                             Bucket=bucket_name,
                             Key=key,
-                            ACL='public-read'
+                            ACL="public-read",
                         )
-                        logger.info(f"Signal: Set ACL to public-read for {key}")
-                        break  # Success, no need to try other keys
+                        logger.info("Signal: Set ACL to public-read for %s", key)
+                        break
                     except ClientError as e:
-                        error_code = e.response.get('Error', {}).get('Code', '')
-                        if 'BlockPublicAccess' in str(e) or error_code == 'AccessDenied':
-                            logger.error(f"Signal: Cannot set ACL for {key}: Block Public Access may be enabled or IAM permissions missing")
+                        error_code = e.response.get("Error", {}).get("Code", "")
+                        if "BlockPublicAccess" in str(e) or error_code == "AccessDenied":
+                            logger.error(
+                                "Signal: Cannot set ACL for %s", key,
+                                extra={"error": str(e)},
+                            )
                         else:
-                            logger.warning(f"Signal: Could not set ACL for {key}: {e}")
-                    break  # Found file, stop trying other keys
+                            logger.warning(
+                                "Signal: Could not set ACL for %s", key,
+                                extra={"error": str(e)},
+                            )
+                    break
                 except ClientError as e:
-                    if e.response['Error']['Code'] != '404':
-                        # Not a 404, some other error
-                        logger.warning(f"Signal: Error checking file {key}: {e}")
+                    if e.response["Error"]["Code"] != "404":
+                        logger.warning(
+                            "Signal: Error checking file %s", key,
+                            extra={"error": str(e)},
+                        )
                     continue
-            
+
             if not file_found:
-                logger.warning(f"Signal: File not found in S3 for any of these keys: {unique_keys}. Upload may have failed or path is incorrect.")
-                
+                logger.warning(
+                    "Signal: File not found in S3 for keys",
+                    extra={"keys": unique_keys},
+                )
+
         except Exception as e:
-            # Don't fail the save if ACL setting fails
             logger.error(f"Error setting S3 ACL for product image: {e}")
             import traceback
             logger.error(traceback.format_exc())
-    
-    # Run ACL setting in a separate thread with a delay
+
     thread = threading.Thread(target=set_acl_after_delay)
     thread.daemon = True
     thread.start()

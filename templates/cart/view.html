@@ -159,7 +159,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Handle quantity updates for authenticated users
   document.querySelectorAll('.quantity-container[data-item-id] button[data-action]').forEach(function(button) {
     button.addEventListener('click', function(e) {
       e.preventDefault();
@@ -176,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
-      // Find the quantity input
       const quantityInput = container.querySelector('.quantity-amount');
       
       if (!quantityInput) {
@@ -184,7 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
       }
       
-      // Get current quantity and calculate new quantity
       const currentQuantity = parseInt(quantityInput.value) || 1;
       const newQuantity = Math.max(1, currentQuantity + change);
       
@@ -195,7 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
         newQuantity: newQuantity
       });
       
-      // Remove any existing quantity hidden inputs to avoid duplicates
       const existingQuantityInputs = form.querySelectorAll('input[name="quantity"]');
       existingQuantityInputs.forEach(function(input) {
         if (input.type === 'hidden') {
@@ -203,39 +199,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
-      // Create new hidden input for quantity
       const quantityHiddenInput = document.createElement('input');
       quantityHiddenInput.type = 'hidden';
       quantityHiddenInput.name = 'quantity';
       quantityHiddenInput.value = newQuantity;
       form.appendChild(quantityHiddenInput);
       
-      // Update visible input
       quantityInput.value = newQuantity;
       
-      // Verify the value before submitting
       console.log('Before submit - hidden input value:', quantityHiddenInput.value);
       console.log('Before submit - visible input value:', quantityInput.value);
       console.log('Form action:', form.action);
       
-      // Disable all buttons in the form to prevent double submission
       const allButtons = form.querySelectorAll('button');
       allButtons.forEach(function(btn) {
         btn.disabled = true;
       });
       
-      // Submit the form
       console.log('Submitting form with quantity:', newQuantity);
       setTimeout(function() {
         form.submit();
-      }, 100); // Small delay to ensure value is set
+      }, 100);
       
       return false;
     });
   });
 });
 
-// Keep the old function for backwards compatibility with inline handlers
 function updateQuantity(event, itemId, change) {
   try {
     if (event) {
@@ -291,11 +281,8 @@ function updateQuantity(event, itemId, change) {
 }
 
 function updateSessionQuantity(event, change) {
-  // Find the button that was clicked
   const button = event.target;
-  // Find the quantity container
   const container = button.closest('.quantity-container');
-  // Find the quantity input
   const quantityInput = container.querySelector('.quantity-amount');
   
   if (!quantityInput || !container) {
@@ -303,20 +290,16 @@ function updateSessionQuantity(event, change) {
     return;
   }
   
-  // Get current quantity and calculate new quantity
   const currentQuantity = parseInt(quantityInput.value) || 1;
   const newQuantity = Math.max(1, currentQuantity + change);
   
-  // Get data from container
   const productId = container.getAttribute('data-product-id');
   const variationIdsStr = container.getAttribute('data-variation-ids');
   
-  // Create a form to submit the update
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = '{% url "cart:update" item_id=0 %}';
   
-  // Get CSRF token
   const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
   const csrfInput = document.createElement('input');
   csrfInput.type = 'hidden';
@@ -324,21 +307,18 @@ function updateSessionQuantity(event, change) {
   csrfInput.value = csrf;
   form.appendChild(csrfInput);
   
-  // Add quantity
   const quantityHiddenInput = document.createElement('input');
   quantityHiddenInput.type = 'hidden';
   quantityHiddenInput.name = 'quantity';
   quantityHiddenInput.value = newQuantity;
   form.appendChild(quantityHiddenInput);
   
-  // Add product_id
   const productIdInput = document.createElement('input');
   productIdInput.type = 'hidden';
   productIdInput.name = 'product_id';
   productIdInput.value = productId;
   form.appendChild(productIdInput);
   
-  // Add variation_ids if they exist
   if (variationIdsStr && variationIdsStr.trim() !== '') {
     const variationIds = variationIdsStr.split(',').filter(id => id.trim() !== '');
     variationIds.forEach(function(vid) {

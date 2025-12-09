@@ -15,6 +15,7 @@ class Cart(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """Return a label for the cart owner."""
         return f"Cart for {self.user.email}"
 
     def get_total(self):
@@ -44,17 +45,17 @@ class CartItem(models.Model):
         unique_together = ["cart", "product"]
 
     def __str__(self):
+        """Return a label combining quantity and product."""
         return f"{self.quantity}x {self.product.name}"
 
     def get_subtotal(self):
         """Calculate subtotal for this item including variations."""
         base_price = self.product.price
-        
-        # Add variation price adjustments
+
         variation_adjustment = sum(
             variation.price_adjustment for variation in self.variations.all()
         )
-        
+
         item_price = base_price + variation_adjustment
         return item_price * self.quantity
 
