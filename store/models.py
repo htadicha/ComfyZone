@@ -229,15 +229,40 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
         if not all([bucket_name, region_name, aws_access_key_id, aws_secret_access_key]):
             return
         
-        # Get the S3 key
+        # Get the S3 key using the storage backend
         image_name = instance.image.name
-        aws_location = getattr(settings, 'AWS_LOCATION', 'media')
+        storage = instance.image.storage
         
-        # Construct the S3 key
-        if image_name.startswith(aws_location):
-            s3_key = image_name
-        else:
-            s3_key = f"{aws_location}/{image_name}"
+        # Try to get the actual S3 key from storage
+        try:
+            # Use storage's _normalize_name to get the correct key
+            if hasattr(storage, 'location'):
+                location = storage.location.strip('/') if storage.location else ''
+            else:
+                location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
+            
+            # Normalize the name
+            if hasattr(storage, '_normalize_name'):
+                normalized = storage._normalize_name(storage._clean_name(image_name))
+            else:
+                normalized = image_name.lstrip('/')
+            
+            # Construct S3 key
+            if normalized.startswith(location + '/'):
+                s3_key = normalized
+            elif normalized.startswith('/'):
+                s3_key = f"{location}{normalized}"
+            else:
+                s3_key = f"{location}/{normalized}" if location else normalized
+        except:
+            # Fallback to simple construction
+            aws_location = getattr(settings, 'AWS_LOCATION', 'media').strip('/')
+            if image_name.startswith(aws_location + '/'):
+                s3_key = image_name
+            elif image_name.startswith('/'):
+                s3_key = f"{aws_location}{image_name}"
+            else:
+                s3_key = f"{aws_location}/{image_name}"
         
         # Initialize S3 client
         s3_client = boto3.client(
@@ -254,11 +279,20 @@ def set_s3_acl_on_product_image(sender, instance, created, **kwargs):
                 Key=s3_key,
                 ACL='public-read'
             )
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Signal: Set ACL to public-read for {s3_key}")
         except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', '')
             # Log but don't fail - file might not exist yet or ACL might already be set
             import logging
             logger = logging.getLogger(__name__)
-            logger.warning(f"Could not set ACL for {s3_key}: {e}")
+            if error_code == 'NoSuchKey':
+                logger.warning(f"Signal: File not found in S3: {s3_key}")
+            elif 'BlockPublicAccess' in str(e):
+                logger.error(f"Signal: Block Public Access is enabled on bucket!")
+            else:
+                logger.warning(f"Signal: Could not set ACL for {s3_key}: {e}")
             
     except Exception as e:
         # Don't fail the save if ACL setting fails
