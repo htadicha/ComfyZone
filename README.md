@@ -1106,7 +1106,7 @@ print(f"MEDIA_URL: {settings.MEDIA_URL}")
 
 ## Agile Delivery Playbook
 
-Detailed artefacts (board process, sprint logs, and screenshots) now live under [`docs/agile/`](docs/agile/).
+Detailed in the GITHUB issues [GitHub Issues](https://github.com/htadicha/ComfyZone/issues?q=is%3Aissue%20state%3Aclosed).
 
 ### GitHub Issues Workflow
 
@@ -1140,11 +1140,6 @@ Detailed artefacts (board process, sprint logs, and screenshots) now live under 
 | Platform | Handle | Status | Content Focus |
 | --- | --- | --- | --- |
 | Facebook | [ComfyZone Official](https://www.facebook.com/profile.php?id=61584756575041) | New (0 followers) | Product launches, live shopping |
-| Instagram | [@comfyzone](https://instagram.com/comfyzone) | New | Lifestyle photography, Reels |
-| Twitter/X | [@ShopComfyZone](https://twitter.com/ShopComfyZone) | New | Support, flash sales |
-| LinkedIn | [ComfyZone](https://linkedin.com/company/comfyzone) | New | Company updates, hiring |
-| YouTube | [ComfyZone TV](https://youtube.com/@comfyzone) | New | Product demos, styling tips |
-| Pinterest | [ComfyZone](https://pinterest.com/comfyzone) | New | Mood boards, seasonal sets |
 
 Newsletter growth happens through the footer CTA (double opt-in with consent logging) and high-intent shoppers can request concierge follow-up via [`/marketing/leads/new/`](marketing/urls.py). Staff review captured leads in the on-site dashboard or export subscribers straight from Django admin for CRM import.
 
@@ -1178,7 +1173,7 @@ Coding standards: PEP 8, descriptive docstrings, minimal inline comments for com
 ## Support
 
 - **Email**: [support@comfyzone.app](mailto:support@comfyzone.app)
-- **Issues**: [GitHub Issues](https://github.com/<you>/ComfyZone/issues)
+- **Issues**: [GitHub Issues](https://github.com/htadicha/ComfyZone/issues?q=is%3Aissue%20state%3Aclosed)
 - **Discussions**: Enable GitHub Discussions for community Q&A.
 
 ## Acknowledgments
