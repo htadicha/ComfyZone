@@ -12,6 +12,7 @@
 
 > ComfyZone is deploy-ready via the included `Procfile`, `runtime.txt`, and the steps documented in the [Deployment](#deployment) section below.
 
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -55,7 +56,7 @@ All configuration is sourced from environment variables (via `python-decouple`),
 
 ## Wireframes & Visual References
 
-Fresh PNG wireframes for every template-backed page live in `media/wireframes/`. Use them as layout guides when implementing or QA-ing templates.
+PNG wireframes for every template-backed page live in `media/wireframes/`. Used as layout guides when implementing or QA-ing templates.
 
 ### Storefront
 
@@ -1186,3 +1187,4 @@ Coding standards: PEP 8, descriptive docstrings, minimal inline comments for com
 ---
 
 **Made with ❤️ by the ComfyZone team.** This README will be updated whenever  new features, APIs, or deployment targets are added so it remains single source of truth for the App.
+**NOTE** > All the person pictures are AI generated and are mock up for what the real website will look like in the next iterations
